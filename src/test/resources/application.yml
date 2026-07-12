@@ -1,0 +1,22 @@
+# 테스트 전용 설정. H2 인메모리 DB 를 사용해 외부 MySQL 없이 컨텍스트가 뜨도록 한다.
+spring:
+  datasource:
+    url: jdbc:h2:mem:wedu;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+    open-in-view: false
+
+jwt:
+  secret: test-secret-value-that-is-long-enough-for-hmac-sha-256-key-please
+  access-token-validity-seconds: 3600
+
+logging:
+  level:
+    com.wedu: DEBUG
