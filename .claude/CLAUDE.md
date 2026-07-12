@@ -27,6 +27,11 @@ Claude Code 및 AI 에이전트가 이 저장소에서 작업할 때의 지침. 
 - 커밋 전 `./gradlew clean build` 통과를 확인한다.
 - 비밀값(DB 비밀번호, OAuth secret, JWT secret)은 커밋하지 않는다.
 
+## 가이드 / 스킬
+
+- 구체 코드 스타일(네이밍·Lombok·JPA·테스트): [.claude/guides/code-style.md](./guides/code-style.md)
+- PR 생성 절차(컨벤션·draft PR): [.claude/skills/create-pr/SKILL.md](./skills/create-pr/SKILL.md)
+
 ## 자주 쓰는 명령
 
 ```bash
