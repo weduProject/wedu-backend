@@ -1,4 +1,4 @@
-package com.wedu.user.application;
+package com.wedu.user.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -8,7 +8,8 @@ import com.wedu.global.error.BusinessException;
 import com.wedu.user.domain.Nickname;
 import com.wedu.user.domain.SocialProvider;
 import com.wedu.user.domain.User;
-import com.wedu.user.domain.UserRepository;
+import com.wedu.user.dto.UserProfileResponse;
+import com.wedu.user.repository.UserRepository;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,14 +33,14 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("프로필 조회 시 사용자 정보를 결과로 반환한다")
+    @DisplayName("프로필 조회 시 사용자 정보를 응답으로 반환한다")
     void getProfile() {
         when(userRepository.findById(1L)).thenReturn(Optional.of(sampleUser()));
 
-        UserProfileResult result = userService.getProfile(1L);
+        UserProfileResponse response = userService.getProfile(1L);
 
-        assertThat(result.nickname()).isEqualTo("완규");
-        assertThat(result.provider()).isEqualTo(SocialProvider.KAKAO);
+        assertThat(response.nickname()).isEqualTo("완규");
+        assertThat(response.provider()).isEqualTo("KAKAO");
     }
 
     @Test
@@ -52,7 +53,7 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("온보딩 완료 유스케이스가 애그리게이트 상태를 바꾼다")
+    @DisplayName("온보딩 완료 유스케이스가 엔티티 상태를 바꾼다")
     void completeOnboarding() {
         User user = sampleUser();
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
