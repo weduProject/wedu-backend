@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
-# CodeRabbit 설정. 리뷰 언어·톤·경로 필터와 WEDU DDD 규칙 기반 리뷰 지침을 정의한다.
+# CodeRabbit 설정. 리뷰 언어·톤·경로 필터와 WEDU MVC 규칙 기반 리뷰 지침을 정의한다.
 # 이 파일이 있어도 CodeRabbit GitHub App 이 레포에 설치돼 있어야 동작한다
 # (설치: https://github.com/apps/coderabbitai).
 language: "ko-KR"
@@ -26,17 +26,19 @@ reviews:
   path_instructions:
     - path: "src/main/java/**"
       instructions: >
-        WEDU 는 도메인별 패키지 + 계층형 DDD(ARCHITECTURE.md)를 따른다. 다음을 확인한다.
-        (1) 비즈니스 규칙은 domain 애그리게이트에, 트랜잭션 경계는 application(@Transactional),
-        HTTP 변환은 presentation 에 있는가. application 서비스가 규칙을 if 로 흉내 내면 domain 으로 내리도록 제안.
-        (2) 애그리게이트에 setter 가 없고, 상태 변경이 의도를 드러내는 도메인 메서드로 이뤄지는가.
-        (3) 요청/응답/경계 DTO 가 record 이고, 도메인 애그리게이트를 API 에 직접 노출하지 않는가.
-        (4) 다른 Bounded Context 를 객체 참조가 아니라 id(userId, productId)로 참조하는가.
-        (5) 예외를 BusinessException + ErrorCode 로 던지고 HTTP 매핑을 GlobalExceptionHandler 에 위임하는가.
-        (6) 네이티브 SQL 대신 JPQL/메서드 파생을 쓰는가. 시각을 UTC 로 다루는가.
+        WEDU 는 도메인별 패키지 + MVC 계층(controller/dto/service/domain/repository, ARCHITECTURE.md)을 따른다.
+        다음을 확인한다.
+        (1) 비즈니스 규칙은 domain 엔티티에, 트랜잭션 경계는 service(@Transactional),
+        HTTP 변환은 controller 에 있는가. service 가 규칙을 if 로 흉내 내면 domain 으로 내리도록 제안.
+        (2) 엔티티에 setter 가 없고, 상태 변경이 의도를 드러내는 도메인 메서드로 이뤄지는가.
+        (3) 요청/응답 DTO 가 record 이고, 엔티티를 API 에 직접 노출하지 않는가(변환은 DTO 의 from 에 모은다).
+        (4) 다른 도메인을 객체 참조가 아니라 id(userId, productId)로 참조하는가.
+        (5) repository 는 JpaRepository 를 상속하는가(불필요한 Impl/래퍼를 두지 않는가).
+        (6) 예외를 BusinessException + ErrorCode 로 던지고 HTTP 매핑을 GlobalExceptionHandler 에 위임하는가.
+        (7) 네이티브 SQL 대신 JPQL/메서드 파생을 쓰는가. 시각을 UTC 로 다루는가.
     - path: "src/test/java/**"
       instructions: >
-        도메인 규칙은 Spring 없는 단위 테스트로, 유스케이스는 Mockito 로 포트를 대역 처리해 검증하는지 확인한다.
+        도메인 규칙은 Spring 없는 단위 테스트로, 서비스는 Mockito 로 repository 를 대역 처리해 검증하는지 확인한다.
         테스트가 구현 세부가 아니라 관찰 가능한 동작(반환값·상태·예외)을 검증하는지 본다.
 
 chat:
