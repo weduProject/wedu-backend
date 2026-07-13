@@ -1,102 +1,229 @@
-# WEDU Backend 아키텍처
+# WEDU Backend 아키텍처 가이드
 
-이 문서는 WEDU 백엔드의 구조 원칙을 정의한다. 코드를 짜기 전에 이 문서의 계층 책임과 의존성 규칙을 먼저 읽는다.
+이 문서는 WEDU 백엔드를 어떤 구조로 짤지 정해둔 규칙입니다. 처음 하는 사람도
+"이 코드는 어느 클래스에 써야 하지?"를 바로 답할 수 있게 쓰는 게 목표입니다.
 
-## 한눈에 보기
+한 줄 요약: **Spring MVC 그대로 갑니다.** Controller → Service → Repository → Entity
+4단으로 흐르고, 도메인별로 패키지를 나눕니다. DDD 이론은 몰라도 됩니다. 딱 하나,
+"Entity가 자기 데이터 규칙은 스스로 지킨다"만 챙기면 됩니다.
 
-- **아키텍처**: 도메인별 패키지(Bounded Context) + 계층형 아키텍처(Layered Architecture). 단일 배포 단위의 모듈러 모놀리스다.
-- **언어/런타임**: Java 21, Spring Boot 3.3.5, Gradle
-- **저장소**: MySQL + Spring Data JPA (테스트는 H2)
-- **인증**: 소셜 로그인(OAuth2) + JWT, 무상태(stateless)
+## 기술 스택
 
-우리는 "완전한 헥사고날"을 목표로 하지 않는다. 소규모 팀·학습 프로젝트에 맞게 **실용적 DDD**를 따른다. 핵심 원칙(계층 책임 분리, 의존성 방향, 리치 도메인 모델)은 지키되, 과한 추상화는 피한다.
-
-## 근거로 삼은 원전
-
-이 구조는 다음 문헌의 패턴을 근거로 한다. 판단이 애매하면 아래 순서로 참고한다.
-
-- **Eric Evans, _Domain-Driven Design_ (2003)** — 계층형 아키텍처(Presentation/Application/Domain/Infrastructure), Entity·Value Object·Aggregate·Repository·Domain Service, Bounded Context, Ubiquitous Language.
-- **Vaughn Vernon, _Implementing Domain-Driven Design_ (2013)** — 애그리게이트 설계 규칙: "작게 유지하고, 애그리게이트 간에는 객체 참조가 아니라 식별자(id)로 참조하며, 하나의 트랜잭션은 하나의 애그리게이트만 수정한다."
-- **Robert C. Martin, _Clean Architecture_ (2017)** & **Alistair Cockburn, Hexagonal Architecture (Ports & Adapters)** — 의존성 규칙: 의존성은 바깥(인프라)에서 안(도메인)으로만 향한다. Repository 인터페이스(포트)는 도메인에, 구현(어댑터)은 인프라에 둔다.
-- **Martin Fowler, _Anemic Domain Model_** — 비즈니스 규칙 없이 게터/세터만 있는 빈약한 엔티티는 안티패턴. 규칙은 애그리게이트 안에 둔다.
+- Java 21, Spring Boot 3.3.5, Gradle
+- MySQL + Spring Data JPA (테스트는 H2)
+- OAuth2 + JWT 인증 (세션 없음, stateless)
 
 ## 패키지 구조
 
+도메인(기능) 단위로 먼저 나누고, 그 안에서 레이어로 나눕니다.
+"레이어 먼저(controller/, service/ ...)"가 아니라 "도메인 먼저"입니다.
+
 ```
 com.wedu
-├── WeduApplication.java          # 진입점
+├── global                      // 도메인이 아닌 공통 기술 코드
+│   ├── config                  //   스프링 설정
+│   ├── security                //   인증/인가 (JWT, OAuth2)
+│   ├── error                   //   BusinessException, ErrorCode, GlobalExceptionHandler
+│   ├── response                //   ApiResponse (공통 응답 껍데기)
+│   └── common                  //   BaseEntity 등 진짜 공용
 │
-├── global                         # 공통(cross-cutting). 특정 도메인에 속하지 않는 기술 관심사
-│   ├── common                     #   BaseTimeEntity 등 공유 상위 타입
-│   ├── config                     #   Security / Swagger / JPA Auditing 설정
-│   ├── error                      #   ErrorCode, BusinessException, GlobalExceptionHandler
-│   ├── response                   #   ApiResponse 공통 응답 봉투
-│   └── security                   #   JWT 발급/검증, 인증 필터
-│
-└── <bounded-context>              # 도메인별 패키지 (아래 6개)
-    ├── presentation               #   REST 컨트롤러, 요청/응답 DTO
-    ├── application                #   애플리케이션 서비스(유스케이스), 트랜잭션 경계, 경계 DTO
-    ├── domain                     #   애그리게이트/엔티티, 값 객체, 도메인 서비스, Repository 포트, enum
-    └── infrastructure             #   Repository 구현(JPA 어댑터), 외부 연동(크롤러 등)
+└── <도메인>                     // user, recommendation, product, proposal, planner, community
+    ├── controller              //   REST 엔드포인트
+    ├── dto                     //   요청/응답 DTO (record)
+    ├── service                 //   비즈니스 로직
+    ├── domain                  //   Entity (JPA)
+    └── repository              //   DB 접근 (Spring Data JPA)
 ```
 
-### Bounded Context 목록
+새 기능을 짤 때는 위 5개 폴더를 그 도메인 안에 만들고 채워 넣으면 됩니다.
 
-기획 기능표의 6개 도메인 그룹을 그대로 컨텍스트로 매핑했다. 각 컨텍스트의 상세 책임은 해당 패키지의 `package-info.java`에 적혀 있다.
+## 흐름
 
-| 패키지 | 도메인 | 기능(ID) | 담당 |
-|---|---|---|---|
-| `user` | 사용자/인증 | 회원관리(001)·온보딩(002)·마이페이지(018) | 미미 |
-| `recommendation` | 테스트/추천 | 심리테스트(003)·맞춤추천(004) | 다은 |
-| `product` | 상품 | 편집샵(006)·상품상세(007)·인기/크롤링(008) | 완규 |
-| `proposal` | 견적/장바구니 | 나만의 프로포즈(009)·견적/장바구니(010)·찜(011) | 완규 |
-| `planner` | 일정관리 | D-day(012)·캘린더(013)·체크리스트(014)·예산(015) | 경환 |
-| `community` | 커뮤니티 | 후기/평점(017)·커뮤니티(016·후순위) | 다은 |
+요청 하나가 이렇게 흐릅니다. 화살표 방향으로만 부릅니다. 거꾸로(예: Repository가
+Service를 부르는 것) 부르면 안 됩니다.
 
-`user` 컨텍스트가 전 계층을 채운 **레퍼런스 구현**이다. 새 컨텍스트를 채울 때 이 구조를 그대로 본뜬다.
+```
+HTTP 요청
+  → Controller   (요청 받기, 검증, DTO로 변환)
+  → Service      (비즈니스 로직, 트랜잭션)
+  → Repository   (DB 읽고 쓰기)
+  → Entity/DB
+  ← ...          (반대로 응답 DTO 만들어서 돌려줌)
+```
 
-## 계층 책임
+## 레이어별 책임 (여기가 핵심)
 
-의존성은 **presentation → application → domain ← infrastructure** 방향이다. 도메인은 어떤 계층에도 의존하지 않는다.
+### 1. Controller — "HTTP 통역사"
 
-### presentation (표현)
-- REST 엔드포인트, 요청/응답 DTO, 입력 형식 검증(`@Valid`), 인증 principal 해석.
-- 비즈니스 로직 금지. 애플리케이션 서비스에 위임하고 DTO 변환만 한다.
-- 요청/응답 DTO는 `record` 로. 도메인 애그리게이트를 그대로 노출하지 않는다.
+**하는 일**
+- URL/HTTP 메서드 매핑 (`@GetMapping` 등)
+- 요청 값 검증 (`@Valid`)
+- 로그인 사용자 꺼내기 (`@AuthenticationPrincipal`)
+- Service 호출하고, 결과를 `ApiResponse`로 감싸서 반환
 
-### application (애플리케이션)
-- 유스케이스 오케스트레이션. `@Transactional` 로 트랜잭션 경계를 긋는다.
-- 애그리게이트를 조회 → 도메인 메서드 호출 → 결과를 경계 타입(record)으로 반환.
-- **얇게 유지한다.** if 문으로 도메인 규칙을 흉내 내기 시작하면, 그 규칙은 애그리게이트로 내려야 한다는 신호다.
+**하면 안 되는 일**
+- `if`로 비즈니스 규칙 판단 (예: "포인트가 모자라면...") → Service로
+- Repository 직접 호출 → Service를 거쳐야 함
+- `@Transactional` 붙이기 → Service에만
+- Entity를 그대로 응답으로 내보내기 → 반드시 응답 DTO로
 
-### domain (도메인)
-- 비즈니스 규칙의 집. 애그리게이트/엔티티, 값 객체, 도메인 서비스, Repository **포트(인터페이스)**, enum.
-- 상태 변경은 도메인 메서드로만. `setter` 를 두지 않는다.
-- 다른 애그리게이트는 **id 로만 참조**한다(객체 참조 금지).
-- Spring/JPA 기술에 대한 의존을 최소화한다(§실용적 타협 참고).
+```java
+@RestController
+@RequestMapping("/api/products")
+@RequiredArgsConstructor
+public class ProductController {
+    private final ProductService productService;
 
-### infrastructure (인프라)
-- 도메인 포트의 구현(어댑터). Spring Data JPA repository 를 감싼다.
-- 외부 연동(크롤링, 외부 API)도 여기. 기술 세부사항을 이 계층 안에 가둔다.
+    @PostMapping
+    public ApiResponse<ProductResponse> create(@Valid @RequestBody ProductCreateRequest request,
+                                               @AuthenticationPrincipal Long userId) {
+        return ApiResponse.ok(productService.create(request, userId));
+    }
+}
+```
 
-## 핵심 규칙
+### 2. Service — "실제 일하는 곳"
 
-1. **애그리게이트가 규칙을 갖는다.** 생성은 정적 팩토리(`User.register(...)`), 변경은 의도를 드러내는 메서드(`completeOnboarding()`)로. 불변식은 생성/변경 시점에 강제한다.
-2. **값 객체를 활용한다.** 식별자 없이 값으로 의미가 완결되는 개념(닉네임, 금액 등)은 VO 로. 생성자에서 유효성을 보장해 "유효하지 않은 인스턴스가 존재할 수 없게" 한다. (예: `user.domain.Nickname`)
-3. **Repository 는 애그리게이트 루트당 하나.** 인터페이스는 domain, 구현은 infrastructure.
-4. **컨텍스트 간 결합은 id 로.** 다른 컨텍스트의 애그리게이트를 직접 참조하지 않고 `userId`, `productId` 로 참조한다. 표시에 필요한 데이터는 조회 시점에 가져온다.
-5. **예외는 `BusinessException` + `ErrorCode`.** 도메인/애플리케이션은 HTTP 를 모른다. HTTP 변환은 `GlobalExceptionHandler` 한 곳에서.
-6. **응답은 `ApiResponse` 봉투로 통일.** 성공 `ApiResponse.ok(data)`, 실패는 핸들러가 `ApiResponse.fail(code, message)`.
-7. **시간은 UTC.** `BaseTimeEntity` 의 생성/수정 시각은 JPA Auditing 으로 채우고 UTC 로 다룬다.
+**하는 일**
+- 유스케이스 하나 = public 메서드 하나 (예: `create`, `cancel`, `getDetail`)
+- 여러 Repository를 조합해서 로직 수행
+- 트랜잭션 경계 (`@Transactional`은 여기)
+- 요청 DTO → Entity, Entity → 응답 DTO 변환
+- 규칙 위반이면 `BusinessException` 던지기
 
-## 실용적 타협 (읽고 넘어가기)
+**하면 안 되는 일**
+- HttpServletRequest, ResponseEntity 같은 웹 타입 만지기 → 그건 Controller 것
+- 메서드 하나가 너무 많은 일 하기 → 유스케이스 단위로 쪼개기
 
-- **JPA 애너테이션을 애그리게이트에 붙인다.** 순수 도메인 모델과 별도 JPA 엔티티를 두어 매핑하는 방식은 이 규모에 과하다. 대신 `@Entity` 를 애그리게이트에 두되, 도메인은 Spring Data repository 인터페이스에 의존하지 않는다(포트로 역전). 이 정도가 실용적 DDD 의 균형점이다.
-- **CQRS/이벤트 소싱은 도입하지 않는다.** 필요해지기 전까지 단순 CRUD + 리치 도메인으로 충분하다.
+```java
+@Service
+@RequiredArgsConstructor
+public class ProductService {
+    private final ProductRepository productRepository;
 
-## 테스트 전략
+    @Transactional
+    public ProductResponse create(ProductCreateRequest request, Long userId) {
+        Product product = Product.create(request.name(), request.price(), userId);
+        productRepository.save(product);
+        return ProductResponse.from(product);
+    }
 
-- **도메인 단위 테스트**: 애그리게이트/VO 규칙을 Spring 없이 빠르게 검증(`UserTest`, `NicknameTest`).
-- **애플리케이션 테스트**: Mockito 로 Repository 포트를 대역 처리해 유스케이스 흐름 검증(`UserServiceTest`).
-- **컨텍스트 로드/통합 테스트**: `@SpringBootTest` + H2(`WeduApplicationTests`). 외부 MySQL 없이 돈다.
-- 기능을 짜기 전에 테스트를 먼저 쓴다(TDD 지향).
+    @Transactional(readOnly = true)
+    public ProductResponse getDetail(Long id) {
+        Product product = productRepository.findById(id)
+            .orElseThrow(() -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND));
+        return ProductResponse.from(product);
+    }
+}
+```
+
+읽기만 하는 메서드는 `@Transactional(readOnly = true)`를 붙입니다.
+
+### 3. Repository — "DB 창구"
+
+**하는 일**
+- `JpaRepository`를 상속한 인터페이스만
+- 간단한 조회는 메서드 이름으로 (`findByUserId`)
+- 복잡한 쿼리는 `@Query`(JPQL)로. **네이티브 SQL 금지** (DB 종속 함수는 H2 테스트에서 깨짐)
+
+**하면 안 되는 일**
+- 여기에 비즈니스 로직 넣기 → Service로
+- 구현 클래스 직접 만들기 (Querydsl 등 필요할 때만 별도 논의)
+
+```java
+public interface ProductRepository extends JpaRepository<Product, Long> {
+    List<Product> findByUserId(Long userId);
+}
+```
+
+### 4. Entity — "테이블 + 자기 규칙"
+
+**하는 일**
+- 테이블 매핑 (`@Entity`, `@Column`)
+- **자기 데이터의 규칙은 자기가 지킨다.** setter를 열지 말고, 의미 있는 메서드로 바꿉니다.
+  (여기까지가 우리가 챙기는 딱 한 스푼의 DDD입니다.)
+
+```java
+@Entity
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)   // 아무나 new 못 하게
+public class Product extends BaseEntity {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String name;
+    private int price;
+    private Long userId;
+
+    private Product(String name, int price, Long userId) {
+        if (price < 0) throw new BusinessException(ErrorCode.INVALID_PRICE);  // 규칙을 생성 시점에
+        this.name = name;
+        this.price = price;
+        this.userId = userId;
+    }
+
+    // setProduct(...) 대신 의도가 드러나는 메서드
+    public static Product create(String name, int price, Long userId) {
+        return new Product(name, price, userId);
+    }
+    public void changePrice(int newPrice) {
+        if (newPrice < 0) throw new BusinessException(ErrorCode.INVALID_PRICE);
+        this.price = newPrice;
+    }
+}
+```
+
+> 부담되면 처음엔 그냥 필드 + getter만 있는 Entity로 시작해도 됩니다. `setXxx` 남발만
+> 피하세요. 규칙이 생기면 그때 위처럼 메서드로 감싸면 됩니다.
+
+### 5. DTO — "바깥과 주고받는 껍데기"
+
+- 요청/응답 전용. `record`로 만듭니다.
+- **Entity를 그대로 컨트롤러 밖으로 내보내지 않습니다.** (JPA 지연로딩, 필드 노출 사고 방지)
+- Entity → DTO 변환은 DTO 안에 `from(...)` 정적 메서드로 두면 깔끔합니다.
+
+```java
+public record ProductResponse(Long id, String name, int price) {
+    public static ProductResponse from(Product p) {
+        return new ProductResponse(p.getId(), p.getName(), p.getPrice());
+    }
+}
+```
+
+## 공통 규칙
+
+- **응답은 항상 `ApiResponse`로 감쌉니다.** (성공/실패 포맷 통일)
+- **예외는 `BusinessException` + `ErrorCode`로 던집니다.** HTTP 상태 코드로 바꾸는 건
+  `GlobalExceptionHandler`가 한 곳에서 처리합니다. Controller에서 try-catch 하지 마세요.
+- **시간은 전부 UTC.** `BaseEntity`에 JPA Auditing으로 `createdAt`/`updatedAt`을 둡니다.
+- **다른 도메인은 ID로만 참조합니다.** 예: 주문이 사용자를 알아야 하면 `User` 객체가
+  아니라 `Long userId`를 들고, 필요하면 UserService를 통해 조회합니다.
+  (도메인끼리 Entity를 직접 물면 나중에 얽혀서 못 풀어요.)
+
+## "이건 어디에 두나요?" 빠른 표
+
+| 하고 싶은 것 | 두는 곳 |
+|---|---|
+| URL 매핑, 요청 검증 | Controller |
+| 로그인 사용자 꺼내기 | Controller (`@AuthenticationPrincipal`) |
+| "포인트가 모자라면 실패" 같은 규칙 | Service, 또는 규칙이 Entity 자기 것이면 Entity |
+| 트랜잭션 (`@Transactional`) | Service |
+| DB 조회/저장 | Repository |
+| 쿼리 직접 작성 | Repository (`@Query` JPQL) |
+| 요청/응답 형태 | dto (record) |
+| 여러 도메인 걸친 로직 | Service (필요한 Repository/다른 Service 조합) |
+| 공통 에러/응답/설정/시큐리티 | global |
+
+## 일부러 안 하는 것들 (지금은)
+
+- CQRS, 이벤트 소싱 → 필요해지기 전엔 안 합니다.
+- 헥사고날/포트-어댑터 같은 엄격한 구조 → 소규모·학습용이라 과합니다.
+- Entity와 별도의 도메인 객체 분리 → JPA 어노테이션은 Entity에 바로 붙입니다.
+
+규칙은 필요가 생기면 그때 추가합니다. 미리 복잡하게 만들지 않는 게 원칙입니다.
+
+## 테스트
+
+- **Service**: Repository를 Mockito로 mock 해서 로직만 검증.
+- **Entity**: 스프링 없이 순수 단위 테스트 (규칙 메서드 검증).
+- **통합**: `@SpringBootTest` + H2로 Controller~DB까지 한 번에.
+- 가능하면 테스트 먼저 짜고(TDD) 구현하는 걸 권장합니다.

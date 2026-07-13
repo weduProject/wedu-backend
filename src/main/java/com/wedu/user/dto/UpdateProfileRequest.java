@@ -1,4 +1,4 @@
-package com.wedu.user.presentation;
+package com.wedu.user.dto;
 
 import jakarta.validation.constraints.NotBlank;
 
