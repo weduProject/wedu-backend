@@ -81,10 +81,14 @@ export JPA_DDL_AUTO="update"
 
 ## 브랜치 & 커밋 규칙
 
+- **작업 시작 전 이슈 먼저 생성.** GitHub 이슈로 목적·범위를 적고, PR 본문 `이슈: Closes #<번호>` 로 연결한다(머지 시 자동 종료).
 - **`main` 직접 push 금지.** 모든 변경은 PR로 병합한다(브랜치 보호 적용).
-- 작업 브랜치: `feature/<도메인>-<요약>` (예: `feature/product-search`)
+- 작업 브랜치: `<type>/<요약>` — `type` 은 아래 커밋 컨벤션과 동일하게 `feat` · `fix` · `docs` · `refactor` · `test` · `chore` 중 하나.
+  - 예: `feat/product-search`, `fix/user-login-npe`, `chore/coderabbit-config`
+  - 도메인이 뚜렷하면 요약 앞에 도메인을 붙인다(`feat/product-search`).
 - 커밋 컨벤션: `feat` · `fix` · `docs` · `refactor` · `test` · `chore`
   - 예: `feat: 상품 검색 필터 추가 (WEDU-006)`
+  - 브랜치 · 커밋 타입 · 이슈/PR 라벨(✨ feat · 🐛 fix · 📝 docs · ♻️ refactor · ✅ test · 🔧 chore)은 같은 타입 체계를 쓴다.
 
 PR을 열면 [PR 템플릿](./.github/PULL_REQUEST_TEMPLATE.md)이 자동으로 채워진다.
 

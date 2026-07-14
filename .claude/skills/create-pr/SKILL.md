@@ -9,8 +9,12 @@ WEDU 백엔드의 변경사항을 컨벤션에 맞게 커밋하고 **draft PR** 
 
 ## 전제 확인 (순서대로)
 
-1. **main 직접 작업 금지.** 현재 브랜치가 `main` 이면 중단하고, 변경 내용을 담을 `feature/<도메인>-<요약>`
-   또는 `chore/<요약>` 브랜치를 만들어 옮긴 뒤 진행한다. (main 은 브랜치 보호로 push 가 막혀 있다.)
+0. **작업 전 이슈 먼저 생성.** 작업 시작 전(코드·문서·설정 무엇을 바꾸든) GitHub 이슈를 만들고
+   (작업 목적·범위 기술), 그 번호를 기억한다. 이슈 없이 PR 을 만들지 않는다. PR 본문 `이슈: Closes #<번호>` 로 연결해 머지 시 자동으로
+   닫히게 한다.
+1. **main 직접 작업 금지.** 현재 브랜치가 `main` 이면 중단하고, 변경 내용을 담을 `<type>/<요약>`
+   브랜치를 만들어 옮긴 뒤 진행한다. `type` 은 커밋 타입과 동일하게 `feat|fix|docs|refactor|test|chore`
+   중 하나(예: `feat/product-search`, `chore/coderabbit-config`). (main 은 브랜치 보호로 push 가 막혀 있다.)
 2. **빌드 통과 확인.** `./gradlew clean build` 가 성공해야 PR 을 만든다. 실패하면 먼저 고친다.
 3. **비밀값 점검.** `git status` / staged diff 에 secret·비밀번호·토큰·`application-secret.yml`·`.env`
    가 섞이지 않았는지 확인한다. 있으면 중단하고 알린다.
@@ -30,7 +34,7 @@ WEDU 백엔드의 변경사항을 컨벤션에 맞게 커밋하고 **draft PR** 
    gh pr create --draft --base main --title "<type>: <요약> (WEDU-XXX)" --body-file <임시본문파일>
    ```
 3. PR 본문은 `.github/PULL_REQUEST_TEMPLATE.md` 구조를 채운다. 해당 없는 섹션은 `- N/A`.
-   - 작업 내용(기능 ID·도메인), As-is/To-be, 체크리스트, 테스트 방법, 참고.
+   - 작업 내용(`이슈: Closes #<번호>`·기능 ID·도메인), As-is/To-be, 체크리스트, 테스트 방법, 참고.
    - 체크리스트 항목(빌드 통과·계층 책임·테스트 추가·비밀값 없음·id 참조)을 실제 확인한 것만 체크.
 
 ## 마무리
