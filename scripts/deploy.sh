@@ -26,10 +26,10 @@ if [ -n "$PID" ]; then
 fi
 
 # 애플리케이션 실행
-nohup java -jar \
+nohup java \
   -Dspring.profiles.active=prod \
   -Dfile.encoding=UTF-8 \
-  "$JAR_FILE" \
+  -jar "$JAR_FILE" \
   > "$LOG_FILE" 2>&1 &
 
 NEW_PID=$!
@@ -38,7 +38,9 @@ echo "새 프로세스 시작 (PID: $NEW_PID)"
 # 헬스체크 (최대 30초)
 for i in $(seq 1 30); do
   sleep 1
-  if curl -s http://localhost:8080/actuator/health > /dev/null 2>&1; then
+  if curl --fail --silent --show-error \
+      --connect-timeout 2 --max-time 5 \
+      http://localhost:8080/actuator/health > /dev/null; then
     echo "=== 배포 완료 ==="
     exit 0
   fi
