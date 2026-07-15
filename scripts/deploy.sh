@@ -40,7 +40,7 @@ for i in $(seq 1 30); do
   sleep 1
   if curl --fail --silent --show-error \
       --connect-timeout 2 --max-time 5 \
-      http://localhost:8080/actuator/health > /dev/null; then
+      http://localhost:8080/v3/api-docs > /dev/null; then
     echo "=== 배포 완료 ==="
     exit 0
   fi
