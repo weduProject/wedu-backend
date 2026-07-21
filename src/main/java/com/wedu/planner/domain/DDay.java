@@ -42,17 +42,20 @@ public class DDay extends BaseTimeEntity {
         this.weddingDate = weddingDate;
     }
 
+    /** 사용자와 결혼식 날짜를 검증하고 새로운 D-day를 생성한다. */
     public static DDay create(Long userId, LocalDate weddingDate, LocalDate today) {
         validateUserId(userId);
         validateWeddingDate(weddingDate, today);
         return new DDay(userId, weddingDate);
     }
 
+    /** 결혼식 날짜를 오늘 또는 미래 날짜로 변경한다. */
     public void changeWeddingDate(LocalDate weddingDate, LocalDate today) {
         validateWeddingDate(weddingDate, today);
         this.weddingDate = weddingDate;
     }
 
+    /** 기준 날짜부터 결혼식까지 남은 일수를 반환하며, 지난 뒤에는 0을 반환한다. */
     public long daysRemaining(LocalDate today) {
         if (today == null) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "기준 날짜는 필수입니다.");

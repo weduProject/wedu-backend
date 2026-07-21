@@ -11,6 +11,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.wedu.global.error.BusinessException;
+import com.wedu.global.error.ErrorCode;
 import com.wedu.planner.dto.DDayResponse;
 import com.wedu.planner.service.DDayService;
 import java.time.Instant;
@@ -71,6 +73,25 @@ class DDayControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.error.code").value("COMMON_400"));
+    }
+
+    @Test
+    @DisplayName("결혼식 D-day 중복 생성은 409로 응답한다")
+    void rejectDuplicate() throws Exception {
+        LocalDate weddingDate = LocalDate.of(2026, 11, 14);
+        when(dDayService.create(eq(1L), eq(weddingDate)))
+                .thenThrow(new BusinessException(ErrorCode.PLANNER_DDAY_ALREADY_EXISTS));
+
+        mockMvc.perform(post("/api/ddays")
+                        .with(authentication(authentication))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"weddingDate":"2026-11-14"}
+                                """))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("PLANNER_409"));
     }
 
     @Test

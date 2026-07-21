@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
 @ExtendWith(MockitoExtension.class)
 class DDayServiceTest {
@@ -44,20 +45,34 @@ class DDayServiceTest {
     @DisplayName("결혼식 D-day를 생성한다")
     void create() {
         when(dDayRepository.existsByUserId(1L)).thenReturn(false);
-        when(dDayRepository.save(any(DDay.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(dDayRepository.saveAndFlush(any(DDay.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         DDayResponse response = dDayService.create(1L, WEDDING_DATE);
 
         assertThat(response.weddingDate()).isEqualTo(WEDDING_DATE);
         assertThat(response.targetAt()).isEqualTo(Instant.parse("2026-11-13T15:00:00Z"));
         assertThat(response.daysRemaining()).isEqualTo(116);
-        verify(dDayRepository).save(any(DDay.class));
+        verify(dDayRepository).saveAndFlush(any(DDay.class));
     }
 
     @Test
     @DisplayName("사용자에게 이미 D-day가 있으면 중복 생성할 수 없다")
     void rejectDuplicate() {
         when(dDayRepository.existsByUserId(1L)).thenReturn(true);
+
+        assertThatThrownBy(() -> dDayService.create(1L, WEDDING_DATE))
+                .isInstanceOfSatisfying(BusinessException.class, exception ->
+                        assertThat(exception.getErrorCode())
+                                .isEqualTo(ErrorCode.PLANNER_DDAY_ALREADY_EXISTS));
+    }
+
+    @Test
+    @DisplayName("동시 생성으로 DB 유니크 제약이 충돌해도 중복 D-day 예외로 변환한다")
+    void convertUniqueConstraintViolation() {
+        when(dDayRepository.existsByUserId(1L)).thenReturn(false);
+        when(dDayRepository.saveAndFlush(any(DDay.class)))
+                .thenThrow(new DataIntegrityViolationException("duplicate user_id"));
 
         assertThatThrownBy(() -> dDayService.create(1L, WEDDING_DATE))
                 .isInstanceOfSatisfying(BusinessException.class, exception ->
