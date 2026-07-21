@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS ddays (
+CREATE TABLE ddays (
     id BIGINT NOT NULL AUTO_INCREMENT,
     user_id BIGINT NOT NULL,
     wedding_date DATE NOT NULL,
