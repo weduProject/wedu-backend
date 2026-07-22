@@ -3,9 +3,13 @@ package com.wedu.global.error;
 import com.wedu.global.response.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 /**
  * 전역 예외 → {@link ApiResponse} 변환 지점.
@@ -33,6 +37,19 @@ public class GlobalExceptionHandler {
                 : ec.getMessage();
         return ResponseEntity.status(ec.getStatus())
                 .body(ApiResponse.fail(ec.getCode(), message));
+    }
+
+    /** 요청 본문이나 쿼리 파라미터의 형식이 잘못된 경우 공통 입력 오류로 응답. */
+    @ExceptionHandler({
+            HttpMessageNotReadableException.class,
+            MissingServletRequestParameterException.class,
+            MethodArgumentTypeMismatchException.class,
+            HandlerMethodValidationException.class
+    })
+    public ResponseEntity<ApiResponse<Void>> handleInvalidRequest(Exception ignored) {
+        ErrorCode ec = ErrorCode.INVALID_INPUT;
+        return ResponseEntity.status(ec.getStatus())
+                .body(ApiResponse.fail(ec.getCode(), ec.getMessage()));
     }
 
     /** 미처리 예외는 스택트레이스를 로깅하고 500 으로 감싼다(내부 정보 비노출). */

@@ -27,7 +27,11 @@ public enum ErrorCode {
 
     // --- planner 도메인 ---
     PLANNER_DDAY_NOT_FOUND(HttpStatus.NOT_FOUND, "PLANNER_404", "등록된 결혼식 D-day를 찾을 수 없습니다."),
-    PLANNER_DDAY_ALREADY_EXISTS(HttpStatus.CONFLICT, "PLANNER_409", "결혼식 D-day가 이미 등록되어 있습니다.");
+    PLANNER_DDAY_ALREADY_EXISTS(HttpStatus.CONFLICT, "PLANNER_409", "결혼식 D-day가 이미 등록되어 있습니다."),
+    PLANNER_CALENDAR_EVENT_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "PLANNER_CALENDAR_404",
+            "캘린더 일정을 찾을 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;
