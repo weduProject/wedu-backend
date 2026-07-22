@@ -9,8 +9,8 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-/** 캘린더 일정 생성 요청. */
-public record CalendarEventCreateRequest(
+/** 캘린더 일정 수정 요청. 선택 필드에 null을 전달하면 기존 값을 비운다. */
+public record CalendarEventUpdateRequest(
         @NotBlank(message = "일정 제목은 필수입니다.")
         @Size(max = CalendarEvent.MAX_TITLE_LENGTH, message = "일정 제목은 100자 이하여야 합니다.")
         String title,

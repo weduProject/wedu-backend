@@ -3,8 +3,11 @@ CREATE TABLE calendar_events (
     user_id BIGINT NOT NULL,
     title VARCHAR(100) NOT NULL,
     event_date DATE NOT NULL,
+    event_time TIME NULL,
+    category VARCHAR(30) NOT NULL,
+    memo VARCHAR(500) NULL,
     created_at DATETIME(6) NOT NULL,
     updated_at DATETIME(6) NOT NULL,
     PRIMARY KEY (id),
-    INDEX idx_calendar_events_user_date_id (user_id, event_date, id)
+    INDEX idx_calendar_events_user_date_time_id (user_id, event_date, event_time, id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

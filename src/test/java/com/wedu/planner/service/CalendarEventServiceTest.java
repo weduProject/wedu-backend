@@ -3,26 +3,37 @@ package com.wedu.planner.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.wedu.global.error.BusinessException;
 import com.wedu.global.error.ErrorCode;
 import com.wedu.planner.domain.CalendarEvent;
+import com.wedu.planner.domain.CalendarEventCategory;
+import com.wedu.planner.dto.CalendarEventCreateRequest;
 import com.wedu.planner.dto.CalendarEventResponse;
+import com.wedu.planner.dto.CalendarEventUpdateRequest;
 import com.wedu.planner.repository.CalendarEventRepository;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
 
 @ExtendWith(MockitoExtension.class)
 class CalendarEventServiceTest {
+
+    private static final Clock CLOCK = Clock.fixed(
+            Instant.parse("2026-07-21T00:00:00Z"), ZoneOffset.UTC);
 
     @Mock
     private CalendarEventRepository calendarEventRepository;
@@ -31,55 +42,152 @@ class CalendarEventServiceTest {
 
     @BeforeEach
     void setUp() {
-        calendarEventService = new CalendarEventService(calendarEventRepository);
+        calendarEventService = new CalendarEventService(calendarEventRepository, CLOCK);
     }
 
     @Test
-    @DisplayName("같은 날짜에도 여러 캘린더 일정을 생성할 수 있다")
-    void createMultipleEventsOnSameDate() {
+    @DisplayName("Figma 입력 필드를 포함한 캘린더 일정을 생성한다")
+    void create() {
         when(calendarEventRepository.save(any(CalendarEvent.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
-        LocalDate eventDate = LocalDate.of(2026, 8, 3);
 
-        CalendarEventResponse first = calendarEventService.create(1L, "상견례", eventDate);
-        CalendarEventResponse second = calendarEventService.create(1L, "예식장 방문", eventDate);
+        CalendarEventResponse response = calendarEventService.create(1L, createRequest());
 
-        assertThat(first.title()).isEqualTo("상견례");
-        assertThat(second.title()).isEqualTo("예식장 방문");
-        verify(calendarEventRepository, times(2)).save(any(CalendarEvent.class));
+        assertThat(response.title()).isEqualTo("드레스 2차 피팅");
+        assertThat(response.eventTime()).isEqualTo(LocalTime.of(14, 0));
+        assertThat(response.category()).isEqualTo(CalendarEventCategory.STUDIO_DRESS);
+        assertThat(response.memo()).isEqualTo("피팅 준비");
     }
 
     @Test
-    @DisplayName("월의 첫날부터 마지막 날까지 사용자 일정을 조회한다")
-    void getMonthlyEvents() {
+    @DisplayName("카테고리 없이 월간 전체 일정을 조회한다")
+    void getAllMonthlyEvents() {
         LocalDate firstDay = LocalDate.of(2026, 2, 1);
         LocalDate lastDay = LocalDate.of(2026, 2, 28);
         when(calendarEventRepository
-                .findAllByUserIdAndEventDateBetweenOrderByEventDateAscIdAsc(
+                .findAllByUserIdAndEventDateBetweenOrderByEventDateAscEventTimeAscIdAsc(
                         1L, firstDay, lastDay))
-                .thenReturn(List.of(
-                        CalendarEvent.create(1L, "드레스 투어", firstDay),
-                        CalendarEvent.create(1L, "청첩장 수령", lastDay)));
+                .thenReturn(List.of(event("드레스 투어", firstDay)));
 
-        List<CalendarEventResponse> result = calendarEventService.getMonthlyEvents(1L, 2026, 2);
+        List<CalendarEventResponse> result =
+                calendarEventService.getMonthlyEvents(1L, 2026, 2, null);
 
-        assertThat(result).extracting(CalendarEventResponse::eventDate)
-                .containsExactly(firstDay, lastDay);
+        assertThat(result).extracting(CalendarEventResponse::title)
+                .containsExactly("드레스 투어");
     }
 
     @Test
-    @DisplayName("조회 연월이 누락되거나 유효하지 않으면 공통 입력 오류를 반환한다")
-    void rejectInvalidYearMonth() {
-        assertInvalidYearMonth(null, 7);
-        assertInvalidYearMonth(2026, null);
-        assertInvalidYearMonth(2026, 0);
-        assertInvalidYearMonth(2026, 13);
-        assertInvalidYearMonth(999, 1);
+    @DisplayName("카테고리로 월간 일정을 필터링한다")
+    void getMonthlyEventsByCategory() {
+        LocalDate firstDay = LocalDate.of(2026, 7, 1);
+        LocalDate lastDay = LocalDate.of(2026, 7, 31);
+        when(calendarEventRepository
+                .findAllByUserIdAndCategoryAndEventDateBetweenOrderByEventDateAscEventTimeAscIdAsc(
+                        1L, CalendarEventCategory.HONEYMOON, firstDay, lastDay))
+                .thenReturn(List.of(event("허니문 출발", LocalDate.of(2026, 7, 20))));
+
+        List<CalendarEventResponse> result = calendarEventService.getMonthlyEvents(
+                1L, 2026, 7, CalendarEventCategory.HONEYMOON);
+
+        assertThat(result).extracting(CalendarEventResponse::category)
+                .containsOnly(CalendarEventCategory.HONEYMOON);
     }
 
-    private void assertInvalidYearMonth(Integer year, Integer month) {
-        assertThatThrownBy(() -> calendarEventService.getMonthlyEvents(1L, year, month))
+    @Test
+    @DisplayName("서울 기준 오늘부터 다가오는 일정을 제한 개수만큼 조회한다")
+    void getUpcomingEvents() {
+        LocalDate seoulToday = LocalDate.of(2026, 7, 21);
+        PageRequest page = PageRequest.of(0, 10);
+        when(calendarEventRepository
+                .findAllByUserIdAndEventDateGreaterThanEqualOrderByEventDateAscEventTimeAscIdAsc(
+                        1L, seoulToday, page))
+                .thenReturn(List.of(event("청첩장 발송", seoulToday)));
+
+        List<CalendarEventResponse> result =
+                calendarEventService.getUpcomingEvents(1L, null, 10);
+
+        assertThat(result).extracting(CalendarEventResponse::title)
+                .containsExactly("청첩장 발송");
+    }
+
+    @Test
+    @DisplayName("소유한 일정을 수정하고 선택 필드를 비운다")
+    void update() {
+        CalendarEvent event = event("드레스 피팅", LocalDate.of(2026, 7, 12));
+        when(calendarEventRepository.findByIdAndUserId(10L, 1L))
+                .thenReturn(Optional.of(event));
+        CalendarEventUpdateRequest request = new CalendarEventUpdateRequest(
+                "허니문 출발",
+                LocalDate.of(2026, 8, 10),
+                null,
+                CalendarEventCategory.HONEYMOON,
+                null);
+
+        CalendarEventResponse response = calendarEventService.update(1L, 10L, request);
+
+        assertThat(response.title()).isEqualTo("허니문 출발");
+        assertThat(response.eventTime()).isNull();
+        assertThat(response.memo()).isNull();
+    }
+
+    @Test
+    @DisplayName("소유한 일정을 삭제한다")
+    void delete() {
+        CalendarEvent event = event("허니문 출발", LocalDate.of(2026, 8, 10));
+        when(calendarEventRepository.findByIdAndUserId(10L, 1L))
+                .thenReturn(Optional.of(event));
+
+        calendarEventService.delete(1L, 10L);
+
+        verify(calendarEventRepository).delete(event);
+    }
+
+    @Test
+    @DisplayName("다른 사용자의 일정은 수정하거나 삭제할 수 없다")
+    void rejectUnownedEvent() {
+        when(calendarEventRepository.findByIdAndUserId(10L, 1L))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> calendarEventService.update(
+                        1L,
+                        10L,
+                        new CalendarEventUpdateRequest(
+                                "일정",
+                                LocalDate.of(2026, 8, 10),
+                                null,
+                                CalendarEventCategory.OTHER,
+                                null)))
                 .isInstanceOfSatisfying(BusinessException.class, exception ->
-                        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.INVALID_INPUT));
+                        assertThat(exception.getErrorCode())
+                                .isEqualTo(ErrorCode.PLANNER_CALENDAR_EVENT_NOT_FOUND));
+        assertThatThrownBy(() -> calendarEventService.delete(1L, 10L))
+                .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    @DisplayName("조회 연월과 다가오는 일정 개수를 검증한다")
+    void rejectInvalidQuery() {
+        assertThatThrownBy(() -> calendarEventService.getMonthlyEvents(1L, 2026, 13, null))
+                .isInstanceOf(BusinessException.class);
+        assertThatThrownBy(() -> calendarEventService.getUpcomingEvents(1L, null, 0))
+                .isInstanceOf(BusinessException.class);
+        assertThatThrownBy(() -> calendarEventService.getUpcomingEvents(1L, null, 51))
+                .isInstanceOf(BusinessException.class);
+    }
+
+    private CalendarEventCreateRequest createRequest() {
+        return new CalendarEventCreateRequest(
+                "드레스 2차 피팅",
+                LocalDate.of(2026, 7, 12),
+                LocalTime.of(14, 0),
+                CalendarEventCategory.STUDIO_DRESS,
+                "피팅 준비");
+    }
+
+    private CalendarEvent event(String title, LocalDate eventDate) {
+        CalendarEventCategory category = title.startsWith("허니문")
+                ? CalendarEventCategory.HONEYMOON
+                : CalendarEventCategory.STUDIO_DRESS;
+        return CalendarEvent.create(1L, title, eventDate, null, category, null);
     }
 }
