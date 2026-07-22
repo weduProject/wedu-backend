@@ -38,7 +38,7 @@ import org.springframework.test.web.servlet.MockMvc;
 class CalendarEventIntegrationTest {
 
     private static final Instant NOW = Instant.parse("2026-07-21T10:00:00Z");
-    private static final LocalDate TODAY = LocalDate.of(2026, 7, 21);
+    private static final LocalDate TODAY = NOW.atZone(ZoneOffset.UTC).toLocalDate();
 
     @Autowired
     private CalendarEventService calendarEventService;
