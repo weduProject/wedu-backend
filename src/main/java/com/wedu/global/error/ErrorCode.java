@@ -31,7 +31,11 @@ public enum ErrorCode {
     PLANNER_CALENDAR_EVENT_NOT_FOUND(
             HttpStatus.NOT_FOUND,
             "PLANNER_CALENDAR_404",
-            "캘린더 일정을 찾을 수 없습니다.");
+            "캘린더 일정을 찾을 수 없습니다."),
+    PLANNER_CHECKLIST_ITEM_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "PLANNER_CHECKLIST_404",
+            "체크리스트 항목을 찾을 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;
