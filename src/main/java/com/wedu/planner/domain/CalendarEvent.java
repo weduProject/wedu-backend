@@ -14,7 +14,7 @@ import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
+import java.time.OffsetDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -78,7 +78,7 @@ public class CalendarEvent extends BaseTimeEntity {
             Long userId,
             String title,
             LocalDate eventDate,
-            Instant eventAt,
+            OffsetDateTime eventAt,
             CalendarEventCategory category,
             String memo) {
         if (userId == null) {
@@ -86,13 +86,13 @@ public class CalendarEvent extends BaseTimeEntity {
         }
         String normalizedTitle = normalizeTitle(title);
         validateEventDate(eventDate);
-        validateEventAt(eventDate, eventAt);
+        Instant normalizedEventAt = normalizeEventAt(eventDate, eventAt);
         validateCategory(category);
         return new CalendarEvent(
                 userId,
                 normalizedTitle,
                 eventDate,
-                eventAt,
+                normalizedEventAt,
                 category,
                 normalizeMemo(memo));
     }
@@ -101,17 +101,17 @@ public class CalendarEvent extends BaseTimeEntity {
     public void update(
             String title,
             LocalDate eventDate,
-            Instant eventAt,
+            OffsetDateTime eventAt,
             CalendarEventCategory category,
             String memo) {
         String normalizedTitle = normalizeTitle(title);
         validateEventDate(eventDate);
-        validateEventAt(eventDate, eventAt);
+        Instant normalizedEventAt = normalizeEventAt(eventDate, eventAt);
         validateCategory(category);
         String normalizedMemo = normalizeMemo(memo);
         this.title = normalizedTitle;
         this.eventDate = eventDate;
-        this.eventAt = eventAt;
+        this.eventAt = normalizedEventAt;
         this.category = category;
         this.memo = normalizedMemo;
     }
@@ -129,13 +129,16 @@ public class CalendarEvent extends BaseTimeEntity {
         return normalizedTitle;
     }
 
-    private static void validateEventAt(LocalDate eventDate, Instant eventAt) {
-        if (eventAt != null
-                && !eventAt.atZone(ZoneOffset.UTC).toLocalDate().equals(eventDate)) {
+    private static Instant normalizeEventAt(LocalDate eventDate, OffsetDateTime eventAt) {
+        if (eventAt == null) {
+            return null;
+        }
+        if (!eventAt.toLocalDate().equals(eventDate)) {
             throw new BusinessException(
                     ErrorCode.INVALID_INPUT,
-                    "일정 시각의 UTC 날짜가 일정 날짜와 일치해야 합니다.");
+                    "일정 시각의 현지 날짜가 일정 날짜와 일치해야 합니다.");
         }
+        return eventAt.toInstant();
     }
 
     private static void validateEventDate(LocalDate eventDate) {

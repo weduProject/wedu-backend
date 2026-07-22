@@ -12,7 +12,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CalendarEventService {
 
     private static final int MAX_UPCOMING_LIMIT = 50;
+    private static final ZoneId PLANNER_ZONE = ZoneId.of("Asia/Seoul");
 
     private final CalendarEventRepository calendarEventRepository;
     private final Clock clock;
@@ -79,7 +80,7 @@ public class CalendarEventService {
         validateUserId(userId);
         validateUpcomingLimit(limit);
         Instant now = clock.instant();
-        LocalDate today = LocalDate.now(clock.withZone(ZoneOffset.UTC));
+        LocalDate today = LocalDate.now(clock.withZone(PLANNER_ZONE));
         PageRequest page = PageRequest.of(0, limit);
         List<CalendarEvent> events = category == null
                 ? calendarEventRepository.findUpcoming(userId, today, now, page)

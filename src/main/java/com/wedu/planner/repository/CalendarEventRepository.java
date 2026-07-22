@@ -28,9 +28,8 @@ public interface CalendarEventRepository extends JpaRepository<CalendarEvent, Lo
             SELECT event
             FROM CalendarEvent event
             WHERE event.userId = :userId
-              AND (event.eventDate > :today
-                   OR (event.eventDate = :today
-                       AND (event.eventAt IS NULL OR event.eventAt >= :now)))
+              AND ((event.eventAt IS NULL AND event.eventDate >= :today)
+                   OR (event.eventAt IS NOT NULL AND event.eventAt >= :now))
             ORDER BY event.eventDate ASC,
                      CASE WHEN event.eventAt IS NULL THEN 0 ELSE 1 END ASC,
                      event.eventAt ASC,
@@ -47,9 +46,8 @@ public interface CalendarEventRepository extends JpaRepository<CalendarEvent, Lo
             FROM CalendarEvent event
             WHERE event.userId = :userId
               AND event.category = :category
-              AND (event.eventDate > :today
-                   OR (event.eventDate = :today
-                       AND (event.eventAt IS NULL OR event.eventAt >= :now)))
+              AND ((event.eventAt IS NULL AND event.eventDate >= :today)
+                   OR (event.eventAt IS NOT NULL AND event.eventAt >= :now))
             ORDER BY event.eventDate ASC,
                      CASE WHEN event.eventAt IS NULL THEN 0 ELSE 1 END ASC,
                      event.eventAt ASC,

@@ -17,6 +17,7 @@ import com.wedu.planner.repository.CalendarEventRepository;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
@@ -32,7 +33,7 @@ import org.springframework.data.domain.PageRequest;
 class CalendarEventServiceTest {
 
     private static final Clock CLOCK = Clock.fixed(
-            Instant.parse("2026-07-21T10:00:00Z"), ZoneOffset.UTC);
+            Instant.parse("2026-07-21T16:00:00Z"), ZoneOffset.UTC);
 
     @Mock
     private CalendarEventRepository calendarEventRepository;
@@ -53,7 +54,7 @@ class CalendarEventServiceTest {
         CalendarEventResponse response = calendarEventService.create(1L, createRequest());
 
         assertThat(response.title()).isEqualTo("드레스 2차 피팅");
-        assertThat(response.eventAt()).isEqualTo(Instant.parse("2026-07-12T14:00:00Z"));
+        assertThat(response.eventAt()).isEqualTo(Instant.parse("2026-07-11T23:00:00Z"));
         assertThat(response.category()).isEqualTo(CalendarEventCategory.STUDIO_DRESS);
         assertThat(response.memo()).isEqualTo("피팅 준비");
     }
@@ -97,14 +98,14 @@ class CalendarEventServiceTest {
     }
 
     @Test
-    @DisplayName("UTC 현재 시각부터 다가오는 일정을 제한 개수만큼 조회한다")
+    @DisplayName("한국 날짜와 UTC 현재 시각부터 다가오는 일정을 제한 개수만큼 조회한다")
     void getUpcomingEvents() {
-        LocalDate utcToday = LocalDate.of(2026, 7, 21);
+        LocalDate koreaToday = LocalDate.of(2026, 7, 22);
         Instant now = CLOCK.instant();
         PageRequest page = PageRequest.of(0, 10);
-        when(calendarEventRepository.findUpcoming(1L, utcToday, now, page))
+        when(calendarEventRepository.findUpcoming(1L, koreaToday, now, page))
                 .thenReturn(List.of(event(
-                        "청첩장 발송", utcToday, CalendarEventCategory.OTHER)));
+                        "청첩장 발송", koreaToday, CalendarEventCategory.OTHER)));
 
         List<CalendarEventResponse> result =
                 calendarEventService.getUpcomingEvents(1L, null, 10);
@@ -188,7 +189,7 @@ class CalendarEventServiceTest {
         return new CalendarEventCreateRequest(
                 "드레스 2차 피팅",
                 LocalDate.of(2026, 7, 12),
-                Instant.parse("2026-07-12T14:00:00Z"),
+                OffsetDateTime.parse("2026-07-12T08:00:00+09:00"),
                 CalendarEventCategory.STUDIO_DRESS,
                 "피팅 준비");
     }

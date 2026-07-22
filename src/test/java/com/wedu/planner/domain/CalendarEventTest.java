@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.wedu.global.error.BusinessException;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,12 +19,12 @@ class CalendarEventTest {
                 1L,
                 "  드레스 2차 피팅  ",
                 LocalDate.of(2026, 7, 12),
-                Instant.parse("2026-07-12T14:00:00Z"),
+                OffsetDateTime.parse("2026-07-12T08:00:00+09:00"),
                 CalendarEventCategory.STUDIO_DRESS,
                 "  피팅 드레스 사진 촬영  ");
 
         assertThat(event.getTitle()).isEqualTo("드레스 2차 피팅");
-        assertThat(event.getEventAt()).isEqualTo(Instant.parse("2026-07-12T14:00:00Z"));
+        assertThat(event.getEventAt()).isEqualTo(Instant.parse("2026-07-11T23:00:00Z"));
         assertThat(event.getCategory()).isEqualTo(CalendarEventCategory.STUDIO_DRESS);
         assertThat(event.getMemo()).isEqualTo("피팅 드레스 사진 촬영");
     }
@@ -41,7 +42,7 @@ class CalendarEventTest {
     @DisplayName("일정의 모든 폼 값을 수정하고 선택 값은 비울 수 있다")
     void update() {
         CalendarEvent event = event(
-                "드레스 피팅", Instant.parse("2026-07-12T14:00:00Z"), "준비물 확인");
+                "드레스 피팅", OffsetDateTime.parse("2026-07-12T14:00:00+09:00"), "준비물 확인");
 
         event.update(
                 "웨딩밴드 픽업",
@@ -55,6 +56,22 @@ class CalendarEventTest {
         assertThat(event.getEventAt()).isNull();
         assertThat(event.getCategory()).isEqualTo(CalendarEventCategory.JEWELRY_GIFTS);
         assertThat(event.getMemo()).isNull();
+    }
+
+    @Test
+    @DisplayName("일정 수정 시 입력 오프셋을 보존해 검증하고 UTC 시각으로 변환한다")
+    void updateWithOffsetDateTime() {
+        CalendarEvent event = event("드레스 피팅", null, null);
+
+        event.update(
+                "드레스 피팅",
+                LocalDate.of(2026, 7, 13),
+                OffsetDateTime.parse("2026-07-13T08:00:00+09:00"),
+                CalendarEventCategory.STUDIO_DRESS,
+                null);
+
+        assertThat(event.getEventDate()).isEqualTo(LocalDate.of(2026, 7, 13));
+        assertThat(event.getEventAt()).isEqualTo(Instant.parse("2026-07-12T23:00:00Z"));
     }
 
     @Test
@@ -85,7 +102,7 @@ class CalendarEventTest {
                 1L,
                 "일정",
                 eventDate,
-                Instant.parse("2026-08-04T00:00:00Z"),
+                OffsetDateTime.parse("2026-08-04T00:00:00Z"),
                 CalendarEventCategory.OTHER,
                 null));
     }
@@ -113,7 +130,7 @@ class CalendarEventTest {
                 null));
     }
 
-    private CalendarEvent event(String title, Instant eventAt, String memo) {
+    private CalendarEvent event(String title, OffsetDateTime eventAt, String memo) {
         return CalendarEvent.create(
                 1L,
                 title,
