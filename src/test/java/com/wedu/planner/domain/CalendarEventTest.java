@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.wedu.global.error.BusinessException;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,12 +18,12 @@ class CalendarEventTest {
                 1L,
                 "  드레스 2차 피팅  ",
                 LocalDate.of(2026, 7, 12),
-                LocalTime.of(14, 0),
+                Instant.parse("2026-07-12T14:00:00Z"),
                 CalendarEventCategory.STUDIO_DRESS,
                 "  피팅 드레스 사진 촬영  ");
 
         assertThat(event.getTitle()).isEqualTo("드레스 2차 피팅");
-        assertThat(event.getEventTime()).isEqualTo(LocalTime.of(14, 0));
+        assertThat(event.getEventAt()).isEqualTo(Instant.parse("2026-07-12T14:00:00Z"));
         assertThat(event.getCategory()).isEqualTo(CalendarEventCategory.STUDIO_DRESS);
         assertThat(event.getMemo()).isEqualTo("피팅 드레스 사진 촬영");
     }
@@ -33,14 +33,15 @@ class CalendarEventTest {
     void createDateOnlyEvent() {
         CalendarEvent event = event("청첩장 발송 마감", null, " ");
 
-        assertThat(event.getEventTime()).isNull();
+        assertThat(event.getEventAt()).isNull();
         assertThat(event.getMemo()).isNull();
     }
 
     @Test
     @DisplayName("일정의 모든 폼 값을 수정하고 선택 값은 비울 수 있다")
     void update() {
-        CalendarEvent event = event("드레스 피팅", LocalTime.of(14, 0), "준비물 확인");
+        CalendarEvent event = event(
+                "드레스 피팅", Instant.parse("2026-07-12T14:00:00Z"), "준비물 확인");
 
         event.update(
                 "웨딩밴드 픽업",
@@ -51,7 +52,7 @@ class CalendarEventTest {
 
         assertThat(event.getTitle()).isEqualTo("웨딩밴드 픽업");
         assertThat(event.getEventDate()).isEqualTo(LocalDate.of(2026, 7, 20));
-        assertThat(event.getEventTime()).isNull();
+        assertThat(event.getEventAt()).isNull();
         assertThat(event.getCategory()).isEqualTo(CalendarEventCategory.JEWELRY_GIFTS);
         assertThat(event.getMemo()).isNull();
     }
@@ -80,14 +81,44 @@ class CalendarEventTest {
                 null,
                 CalendarEventCategory.OTHER,
                 null));
+        assertInvalid(() -> CalendarEvent.create(
+                1L,
+                "일정",
+                eventDate,
+                Instant.parse("2026-08-04T00:00:00Z"),
+                CalendarEventCategory.OTHER,
+                null));
     }
 
-    private CalendarEvent event(String title, LocalTime eventTime, String memo) {
+    @Test
+    @DisplayName("제목 길이는 이모지를 포함해 유니코드 문자 수로 검증한다")
+    void validateTitleByCodePoint() {
+        String oneHundredEmoji = "😀".repeat(100);
+
+        CalendarEvent event = CalendarEvent.create(
+                1L,
+                oneHundredEmoji,
+                LocalDate.of(2026, 8, 3),
+                null,
+                CalendarEventCategory.OTHER,
+                null);
+
+        assertThat(event.getTitle()).isEqualTo(oneHundredEmoji);
+        assertInvalid(() -> CalendarEvent.create(
+                1L,
+                "😀".repeat(101),
+                LocalDate.of(2026, 8, 3),
+                null,
+                CalendarEventCategory.OTHER,
+                null));
+    }
+
+    private CalendarEvent event(String title, Instant eventAt, String memo) {
         return CalendarEvent.create(
                 1L,
                 title,
                 LocalDate.of(2026, 7, 12),
-                eventTime,
+                eventAt,
                 CalendarEventCategory.STUDIO_DRESS,
                 memo);
     }

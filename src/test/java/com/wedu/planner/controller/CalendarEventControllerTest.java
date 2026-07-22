@@ -20,8 +20,8 @@ import com.wedu.planner.dto.CalendarEventCreateRequest;
 import com.wedu.planner.dto.CalendarEventResponse;
 import com.wedu.planner.dto.CalendarEventUpdateRequest;
 import com.wedu.planner.service.CalendarEventService;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -58,13 +58,13 @@ class CalendarEventControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.eventTime").value("14:00"))
+                .andExpect(jsonPath("$.data.eventAt").value("2026-07-12T14:00:00Z"))
                 .andExpect(jsonPath("$.data.category").value("STUDIO_DRESS"))
                 .andExpect(jsonPath("$.data.memo").value("피팅 준비"));
     }
 
     @Test
-    @DisplayName("필수 입력과 시간·카테고리 형식을 검증한다")
+    @DisplayName("필수 입력과 UTC 시각·카테고리 형식을 검증한다")
     void rejectInvalidCreateRequest() throws Exception {
         mockMvc.perform(post("/api/calendar-events")
                         .with(authentication(authentication))
@@ -84,7 +84,7 @@ class CalendarEventControllerTest {
                                 {
                                   "title":"일정",
                                   "eventDate":"2026-07-12",
-                                  "eventTime":"25:00",
+                                  "eventAt":"잘못된-UTC-시각",
                                   "category":"UNKNOWN"
                                 }
                                 """))
@@ -166,7 +166,7 @@ class CalendarEventControllerTest {
                 10L,
                 "드레스 2차 피팅",
                 LocalDate.of(2026, 7, 12),
-                LocalTime.of(14, 0),
+                Instant.parse("2026-07-12T14:00:00Z"),
                 CalendarEventCategory.STUDIO_DRESS,
                 "피팅 준비");
     }
@@ -176,7 +176,7 @@ class CalendarEventControllerTest {
                 {
                   "title":"드레스 2차 피팅",
                   "eventDate":"2026-07-12",
-                  "eventTime":"14:00",
+                  "eventAt":"2026-07-12T14:00:00Z",
                   "category":"STUDIO_DRESS",
                   "memo":"피팅 준비"
                 }

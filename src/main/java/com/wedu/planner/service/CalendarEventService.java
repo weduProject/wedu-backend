@@ -9,9 +9,10 @@ import com.wedu.planner.dto.CalendarEventResponse;
 import com.wedu.planner.dto.CalendarEventUpdateRequest;
 import com.wedu.planner.repository.CalendarEventRepository;
 import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -23,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CalendarEventService {
 
-    private static final ZoneId WEDDING_ZONE = ZoneId.of("Asia/Seoul");
     private static final int MAX_UPCOMING_LIMIT = 50;
 
     private final CalendarEventRepository calendarEventRepository;
@@ -39,7 +39,7 @@ public class CalendarEventService {
                 userId,
                 request.title(),
                 request.eventDate(),
-                request.eventTime(),
+                request.eventAt(),
                 request.category(),
                 request.memo());
         return CalendarEventResponse.from(calendarEventRepository.save(event));
@@ -56,10 +56,10 @@ public class CalendarEventService {
         YearMonth yearMonth = toYearMonth(year, month);
         List<CalendarEvent> events = category == null
                 ? calendarEventRepository
-                        .findAllByUserIdAndEventDateBetweenOrderByEventDateAscEventTimeAscIdAsc(
+                        .findAllByUserIdAndEventDateBetweenOrderByEventDateAscEventAtAscIdAsc(
                                 userId, yearMonth.atDay(1), yearMonth.atEndOfMonth())
                 : calendarEventRepository
-                        .findAllByUserIdAndCategoryAndEventDateBetweenOrderByEventDateAscEventTimeAscIdAsc(
+                        .findAllByUserIdAndCategoryAndEventDateBetweenOrderByEventDateAscEventAtAscIdAsc(
                                 userId,
                                 category,
                                 yearMonth.atDay(1),
@@ -78,15 +78,13 @@ public class CalendarEventService {
             Integer limit) {
         validateUserId(userId);
         validateUpcomingLimit(limit);
-        LocalDate today = LocalDate.now(clock.withZone(WEDDING_ZONE));
+        Instant now = clock.instant();
+        LocalDate today = LocalDate.now(clock.withZone(ZoneOffset.UTC));
         PageRequest page = PageRequest.of(0, limit);
         List<CalendarEvent> events = category == null
-                ? calendarEventRepository
-                        .findAllByUserIdAndEventDateGreaterThanEqualOrderByEventDateAscEventTimeAscIdAsc(
-                                userId, today, page)
-                : calendarEventRepository
-                        .findAllByUserIdAndCategoryAndEventDateGreaterThanEqualOrderByEventDateAscEventTimeAscIdAsc(
-                                userId, category, today, page);
+                ? calendarEventRepository.findUpcoming(userId, today, now, page)
+                : calendarEventRepository.findUpcomingByCategory(
+                        userId, category, today, now, page);
         return events.stream().map(CalendarEventResponse::from).toList();
     }
 
@@ -103,7 +101,7 @@ public class CalendarEventService {
         event.update(
                 request.title(),
                 request.eventDate(),
-                request.eventTime(),
+                request.eventAt(),
                 request.category(),
                 request.memo());
         return CalendarEventResponse.from(event);

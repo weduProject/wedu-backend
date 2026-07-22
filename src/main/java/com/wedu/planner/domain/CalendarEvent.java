@@ -12,8 +12,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.ZoneOffset;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,8 +25,8 @@ import lombok.NoArgsConstructor;
 @Table(
         name = "calendar_events",
         indexes = @Index(
-                name = "idx_calendar_events_user_date_time_id",
-                columnList = "user_id,event_date,event_time,id"))
+                name = "idx_calendar_events_user_date_at_id",
+                columnList = "user_id,event_date,event_at,id"))
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CalendarEvent extends BaseTimeEntity {
 
@@ -47,8 +48,8 @@ public class CalendarEvent extends BaseTimeEntity {
     @Column(name = "event_date", nullable = false)
     private LocalDate eventDate;
 
-    @Column(name = "event_time")
-    private LocalTime eventTime;
+    @Column(name = "event_at")
+    private Instant eventAt;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
@@ -61,13 +62,13 @@ public class CalendarEvent extends BaseTimeEntity {
             Long userId,
             String title,
             LocalDate eventDate,
-            LocalTime eventTime,
+            Instant eventAt,
             CalendarEventCategory category,
             String memo) {
         this.userId = userId;
         this.title = title;
         this.eventDate = eventDate;
-        this.eventTime = eventTime;
+        this.eventAt = eventAt;
         this.category = category;
         this.memo = memo;
     }
@@ -77,7 +78,7 @@ public class CalendarEvent extends BaseTimeEntity {
             Long userId,
             String title,
             LocalDate eventDate,
-            LocalTime eventTime,
+            Instant eventAt,
             CalendarEventCategory category,
             String memo) {
         if (userId == null) {
@@ -85,12 +86,13 @@ public class CalendarEvent extends BaseTimeEntity {
         }
         String normalizedTitle = normalizeTitle(title);
         validateEventDate(eventDate);
+        validateEventAt(eventDate, eventAt);
         validateCategory(category);
         return new CalendarEvent(
                 userId,
                 normalizedTitle,
                 eventDate,
-                eventTime,
+                eventAt,
                 category,
                 normalizeMemo(memo));
     }
@@ -99,16 +101,17 @@ public class CalendarEvent extends BaseTimeEntity {
     public void update(
             String title,
             LocalDate eventDate,
-            LocalTime eventTime,
+            Instant eventAt,
             CalendarEventCategory category,
             String memo) {
         String normalizedTitle = normalizeTitle(title);
         validateEventDate(eventDate);
+        validateEventAt(eventDate, eventAt);
         validateCategory(category);
         String normalizedMemo = normalizeMemo(memo);
         this.title = normalizedTitle;
         this.eventDate = eventDate;
-        this.eventTime = eventTime;
+        this.eventAt = eventAt;
         this.category = category;
         this.memo = normalizedMemo;
     }
@@ -118,12 +121,21 @@ public class CalendarEvent extends BaseTimeEntity {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "일정 제목은 필수입니다.");
         }
         String normalizedTitle = title.trim();
-        if (normalizedTitle.length() > MAX_TITLE_LENGTH) {
+        if (codePointLength(normalizedTitle) > MAX_TITLE_LENGTH) {
             throw new BusinessException(
                     ErrorCode.INVALID_INPUT,
                     "일정 제목은 " + MAX_TITLE_LENGTH + "자 이하여야 합니다.");
         }
         return normalizedTitle;
+    }
+
+    private static void validateEventAt(LocalDate eventDate, Instant eventAt) {
+        if (eventAt != null
+                && !eventAt.atZone(ZoneOffset.UTC).toLocalDate().equals(eventDate)) {
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT,
+                    "일정 시각의 UTC 날짜가 일정 날짜와 일치해야 합니다.");
+        }
     }
 
     private static void validateEventDate(LocalDate eventDate) {
@@ -147,11 +159,15 @@ public class CalendarEvent extends BaseTimeEntity {
             return null;
         }
         String normalizedMemo = memo.trim();
-        if (normalizedMemo.length() > MAX_MEMO_LENGTH) {
+        if (codePointLength(normalizedMemo) > MAX_MEMO_LENGTH) {
             throw new BusinessException(
                     ErrorCode.INVALID_INPUT,
                     "일정 메모는 " + MAX_MEMO_LENGTH + "자 이하여야 합니다.");
         }
         return normalizedMemo;
+    }
+
+    private static int codePointLength(String value) {
+        return value.codePointCount(0, value.length());
     }
 }

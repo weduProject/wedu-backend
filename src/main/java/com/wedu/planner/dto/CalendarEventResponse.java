@@ -1,17 +1,16 @@
 package com.wedu.planner.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.wedu.planner.domain.CalendarEvent;
 import com.wedu.planner.domain.CalendarEventCategory;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalTime;
 
 /** 캘린더 일정 응답. */
 public record CalendarEventResponse(
         Long eventId,
         String title,
         LocalDate eventDate,
-        @JsonFormat(pattern = "HH:mm") LocalTime eventTime,
+        Instant eventAt,
         CalendarEventCategory category,
         String memo) {
 
@@ -21,7 +20,7 @@ public record CalendarEventResponse(
                 event.getId(),
                 event.getTitle(),
                 event.getEventDate(),
-                event.getEventTime(),
+                event.getEventAt(),
                 event.getCategory(),
                 event.getMemo());
     }
