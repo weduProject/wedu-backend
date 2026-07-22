@@ -55,6 +55,7 @@ public class ChecklistController {
     @PutMapping("/{itemId}")
     public ApiResponse<ChecklistItemResponse> update(
             @AuthenticationPrincipal Long userId,
+            @Parameter(description = "체크리스트 항목 ID")
             @PathVariable Long itemId,
             @Valid @RequestBody ChecklistItemUpdateRequest request) {
         return ApiResponse.ok(checklistService.update(userId, itemId, request));
@@ -64,6 +65,7 @@ public class ChecklistController {
     @PatchMapping("/{itemId}/completion")
     public ApiResponse<ChecklistItemResponse> changeCompletion(
             @AuthenticationPrincipal Long userId,
+            @Parameter(description = "체크리스트 항목 ID")
             @PathVariable Long itemId,
             @Valid @RequestBody ChecklistCompletionRequest request) {
         return ApiResponse.ok(checklistService.changeCompletion(userId, itemId, request));
@@ -73,6 +75,7 @@ public class ChecklistController {
     @DeleteMapping("/{itemId}")
     public ApiResponse<Void> delete(
             @AuthenticationPrincipal Long userId,
+            @Parameter(description = "체크리스트 항목 ID")
             @PathVariable Long itemId) {
         checklistService.delete(userId, itemId);
         return ApiResponse.ok();
