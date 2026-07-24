@@ -35,7 +35,11 @@ public enum ErrorCode {
     PLANNER_CHECKLIST_ITEM_NOT_FOUND(
             HttpStatus.NOT_FOUND,
             "PLANNER_CHECKLIST_404",
-            "체크리스트 항목을 찾을 수 없습니다.");
+            "체크리스트 항목을 찾을 수 없습니다."),
+    PLANNER_BUDGET_ITEM_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "PLANNER_BUDGET_404",
+            "예산 항목을 찾을 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;
