@@ -7,4 +7,5 @@ SQL 파일을 버전 번호 순서대로 MySQL에 적용한다. 적용 여부와
 mysql -h <host> -u <user> -p <database> < scripts/migrations/V001__create_ddays.sql
 mysql -h <host> -u <user> -p <database> < scripts/migrations/V002__create_calendar_events.sql
 mysql -h <host> -u <user> -p <database> < scripts/migrations/V003__create_checklist_items.sql
+mysql -h <host> -u <user> -p <database> < scripts/migrations/V004__create_budget_items.sql
 ```
