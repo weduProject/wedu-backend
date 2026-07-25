@@ -1,7 +1,6 @@
 package com.wedu.global.security.oauth;
 
 import com.wedu.auth.dto.SocialLoginResult;
-import com.wedu.auth.service.OAuthLoginCodeStore;
 import com.wedu.auth.service.SocialLoginService;
 import com.wedu.global.error.BusinessException;
 import com.wedu.global.error.ErrorCode;

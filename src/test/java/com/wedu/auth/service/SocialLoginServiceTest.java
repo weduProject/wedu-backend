@@ -100,15 +100,18 @@ class SocialLoginServiceTest {
         User existing = user(3L, SocialProvider.KAKAO, "kakao-race", "race@example.com", "레이스", false);
 
         when(userRepository.findByProviderAndSocialId(SocialProvider.KAKAO, "kakao-race"))
-                .thenReturn(Optional.empty(), Optional.of(existing));
+                .thenReturn(Optional.empty());
         when(socialUserRegistrar.register(info))
                 .thenThrow(new DataIntegrityViolationException("duplicate"));
+        when(socialUserRegistrar.findExisting(SocialProvider.KAKAO, "kakao-race"))
+                .thenReturn(Optional.of(existing));
         when(jwtTokenProvider.createAccessToken(3L)).thenReturn("race-token");
 
         SocialLoginResult result = socialLoginService.loginOrRegister(info);
 
         assertThat(result.accessToken()).isEqualTo("race-token");
         assertThat(result.userId()).isEqualTo(3L);
+        verify(socialUserRegistrar).findExisting(SocialProvider.KAKAO, "kakao-race");
     }
 
     private User user(

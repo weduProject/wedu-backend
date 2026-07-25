@@ -7,8 +7,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.wedu.auth.dto.SocialLoginResult;
-import com.wedu.auth.service.OAuthLoginCodeStore;
 import com.wedu.auth.service.SocialLoginService;
+import com.wedu.global.security.oauth.HttpCookieOAuth2AuthorizationRequestRepository;
+import com.wedu.global.security.oauth.OAuth2UserInfo;
+import com.wedu.global.security.oauth.OAuth2UserInfoExtractor;
+import com.wedu.global.security.oauth.OAuthLoginCodeStore;
 import com.wedu.user.domain.SocialProvider;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;

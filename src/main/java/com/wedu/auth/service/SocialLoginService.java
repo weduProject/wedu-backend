@@ -3,7 +3,6 @@ package com.wedu.auth.service;
 import com.wedu.auth.dto.SocialLoginResult;
 import com.wedu.global.security.jwt.JwtTokenProvider;
 import com.wedu.global.security.oauth.OAuth2UserInfo;
-import com.wedu.user.domain.Nickname;
 import com.wedu.user.domain.User;
 import com.wedu.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -36,8 +35,8 @@ public class SocialLoginService {
         try {
             return socialUserRegistrar.register(info);
         } catch (DataIntegrityViolationException ex) {
-            return userRepository
-                    .findByProviderAndSocialId(info.provider(), info.socialId())
+            return socialUserRegistrar
+                    .findExisting(info.provider(), info.socialId())
                     .orElseThrow(() -> ex);
         }
     }
