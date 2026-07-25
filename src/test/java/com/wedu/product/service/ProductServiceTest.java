@@ -72,4 +72,24 @@ class ProductServiceTest {
                         assertThat(exception.getErrorCode())
                                 .isEqualTo(ErrorCode.PRODUCT_INVALID_PRICE_RANGE));
     }
+
+    @Test
+    @DisplayName("최소 가격이 음수면 예외가 발생한다")
+    void rejectNegativeMinPrice() {
+        Pageable pageable = PageRequest.of(0, 20);
+
+        assertThatThrownBy(() -> productService.search(null, null, -1, null, pageable))
+                .isInstanceOfSatisfying(BusinessException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.PRODUCT_INVALID_PRICE));
+    }
+
+    @Test
+    @DisplayName("최대 가격이 음수면 예외가 발생한다")
+    void rejectNegativeMaxPrice() {
+        Pageable pageable = PageRequest.of(0, 20);
+
+        assertThatThrownBy(() -> productService.search(null, null, null, -1, pageable))
+                .isInstanceOfSatisfying(BusinessException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.PRODUCT_INVALID_PRICE));
+    }
 }

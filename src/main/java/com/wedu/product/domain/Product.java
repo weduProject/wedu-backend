@@ -39,7 +39,7 @@ public class Product extends BaseTimeEntity {
     @Column(name = "vendor_name", nullable = false)
     private String vendorName;
 
-    @Column(name = "thumbnail_url")
+    @Column(name = "thumbnail_url", length = 1000)
     private String thumbnailUrl;
 
     @Column(length = 2000)

@@ -42,6 +42,12 @@ public class ProductService {
     }
 
     private void validatePriceRange(Integer minPrice, Integer maxPrice) {
+        if (minPrice != null && minPrice < 0) {
+            throw new BusinessException(ErrorCode.PRODUCT_INVALID_PRICE);
+        }
+        if (maxPrice != null && maxPrice < 0) {
+            throw new BusinessException(ErrorCode.PRODUCT_INVALID_PRICE);
+        }
         if (minPrice != null && maxPrice != null && minPrice > maxPrice) {
             throw new BusinessException(ErrorCode.PRODUCT_INVALID_PRICE_RANGE);
         }
