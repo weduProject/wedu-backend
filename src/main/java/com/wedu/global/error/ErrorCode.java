@@ -66,7 +66,11 @@ public enum ErrorCode {
             "선택하지 않은 카테고리입니다."),
 
     // --- proposal 도메인 (장바구니/견적함) ---
-    CART_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "CART_404", "장바구니에서 해당 상품을 찾을 수 없습니다.");
+    CART_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "CART_404", "장바구니에서 해당 상품을 찾을 수 없습니다."),
+
+    // --- proposal 도메인 (찜하기) ---
+    WISHLIST_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "WISHLIST_404", "찜하지 않은 상품입니다."),
+    WISHLIST_ITEM_ALREADY_EXISTS(HttpStatus.CONFLICT, "WISHLIST_409", "이미 찜한 상품입니다.");
 
     private final HttpStatus status;
     private final String code;
