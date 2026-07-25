@@ -13,6 +13,7 @@ import com.wedu.product.domain.ProductCategory;
 import com.wedu.product.dto.ProductSummaryResponse;
 import com.wedu.product.repository.ProductRepository;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -60,6 +61,28 @@ class ProductServiceTest {
         List<ProductSummaryResponse> result = productService.search(null, "   ", null, null, pageable);
 
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    @DisplayName("상품 상세 정보를 조회한다")
+    void getDetail() {
+        Product product = Product.create("커플링", ProductCategory.RING, 100_000, "업체", null, "설명");
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+
+        var response = productService.getDetail(1L);
+
+        assertThat(response.name()).isEqualTo("커플링");
+        assertThat(response.description()).isEqualTo("설명");
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 상품을 조회하면 예외가 발생한다")
+    void rejectDetailOfMissingProduct() {
+        when(productRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> productService.getDetail(1L))
+                .isInstanceOfSatisfying(BusinessException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.PRODUCT_NOT_FOUND));
     }
 
     @Test

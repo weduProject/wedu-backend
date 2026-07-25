@@ -2,7 +2,9 @@ package com.wedu.product.service;
 
 import com.wedu.global.error.BusinessException;
 import com.wedu.global.error.ErrorCode;
+import com.wedu.product.domain.Product;
 import com.wedu.product.domain.ProductCategory;
+import com.wedu.product.dto.ProductDetailResponse;
 import com.wedu.product.dto.ProductSummaryResponse;
 import com.wedu.product.repository.ProductRepository;
 import java.util.List;
@@ -32,6 +34,14 @@ public class ProductService {
                 .stream()
                 .map(ProductSummaryResponse::from)
                 .toList();
+    }
+
+    /** 상품 상세 정보를 조회한다. */
+    @Transactional(readOnly = true)
+    public ProductDetailResponse getDetail(Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND));
+        return ProductDetailResponse.from(product);
     }
 
     private String normalizeKeyword(String keyword) {
