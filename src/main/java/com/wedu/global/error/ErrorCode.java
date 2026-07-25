@@ -42,7 +42,15 @@ public enum ErrorCode {
     PLANNER_BUDGET_ITEM_NOT_FOUND(
             HttpStatus.NOT_FOUND,
             "PLANNER_BUDGET_404",
-            "예산 항목을 찾을 수 없습니다.");
+            "예산 항목을 찾을 수 없습니다."),
+
+    // --- product 도메인 ---
+    PRODUCT_INVALID_PRICE(HttpStatus.BAD_REQUEST, "PRODUCT_400", "상품 가격은 0 이상이어야 합니다."),
+    PRODUCT_INVALID_PRICE_RANGE(
+            HttpStatus.BAD_REQUEST,
+            "PRODUCT_400_RANGE",
+            "최소 가격은 최대 가격보다 클 수 없습니다."),
+    PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT_404", "상품을 찾을 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;
