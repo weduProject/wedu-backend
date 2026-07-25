@@ -63,7 +63,10 @@ public enum ErrorCode {
     PROPOSAL_OPTION_NOT_SELECTED(
             HttpStatus.NOT_FOUND,
             "PROPOSAL_OPTION_404",
-            "선택하지 않은 카테고리입니다.");
+            "선택하지 않은 카테고리입니다."),
+
+    // --- proposal 도메인 (장바구니/견적함) ---
+    CART_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "CART_404", "장바구니에서 해당 상품을 찾을 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;
