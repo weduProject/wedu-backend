@@ -50,7 +50,13 @@ public enum ErrorCode {
             HttpStatus.BAD_REQUEST,
             "PRODUCT_400_RANGE",
             "최소 가격은 최대 가격보다 클 수 없습니다."),
-    PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT_404", "상품을 찾을 수 없습니다.");
+    PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "PRODUCT_404", "상품을 찾을 수 없습니다."),
+    PRODUCT_INVALID_NAME(HttpStatus.BAD_REQUEST, "PRODUCT_400_NAME", "상품명이 올바르지 않습니다."),
+    PRODUCT_INVALID_SOURCE(
+            HttpStatus.BAD_REQUEST,
+            "PRODUCT_400_SOURCE",
+            "수집 출처 정보가 올바르지 않습니다."),
+    PRODUCT_INVALID_RANK(HttpStatus.BAD_REQUEST, "PRODUCT_400_RANK", "순위는 1 이상이어야 합니다.");
 
     private final HttpStatus status;
     private final String code;
