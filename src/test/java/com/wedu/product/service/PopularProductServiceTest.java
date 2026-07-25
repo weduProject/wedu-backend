@@ -38,6 +38,10 @@ class PopularProductServiceTest {
 
         assertThat(result).hasSize(2);
         assertThat(result.get(0).rank()).isEqualTo(1);
+        assertThat(result.get(0).name()).isEqualTo("1위 상품");
+        assertThat(result.get(0).price()).isEqualTo(100_000);
+        assertThat(result.get(0).sourceName()).isEqualTo("출처");
+        assertThat(result.get(0).thumbnailUrl()).isNull();
         assertThat(result.get(1).rank()).isEqualTo(2);
     }
 }

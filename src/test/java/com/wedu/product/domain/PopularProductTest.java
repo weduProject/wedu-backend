@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.wedu.global.error.BusinessException;
+import com.wedu.global.error.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -33,6 +34,28 @@ class PopularProductTest {
         assertThatThrownBy(() ->
                 PopularProduct.collect("상품", -1, "출처", "http://source", null, 1))
                 .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    @DisplayName("상품명이 255자를 넘으면 등록할 수 없다")
+    void rejectTooLongName() {
+        String tooLongName = "가".repeat(256);
+
+        assertThatThrownBy(() ->
+                PopularProduct.collect(tooLongName, 1000, "출처", "http://source", null, 1))
+                .isInstanceOfSatisfying(BusinessException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.PRODUCT_INVALID_NAME));
+    }
+
+    @Test
+    @DisplayName("출처 URL이 1000자를 넘으면 등록할 수 없다")
+    void rejectTooLongSourceUrl() {
+        String tooLongUrl = "http://source/" + "a".repeat(990);
+
+        assertThatThrownBy(() ->
+                PopularProduct.collect("상품", 1000, "출처", tooLongUrl, null, 1))
+                .isInstanceOfSatisfying(BusinessException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.PRODUCT_INVALID_SOURCE));
     }
 
     @Test

@@ -62,7 +62,7 @@ public class PopularProduct extends BaseTimeEntity {
             String name, int price, String sourceName, String sourceUrl, String thumbnailUrl, int rank) {
         validateName(name);
         validatePrice(price);
-        validateSource(sourceName, sourceUrl);
+        validateSource(sourceName, sourceUrl, thumbnailUrl);
         validateRank(rank);
         return new PopularProduct(name, price, sourceName, sourceUrl, thumbnailUrl, rank);
     }
@@ -76,8 +76,8 @@ public class PopularProduct extends BaseTimeEntity {
     }
 
     private static void validateName(String name) {
-        if (name == null || name.isBlank()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "상품명은 필수입니다.");
+        if (name == null || name.isBlank() || name.length() > 255) {
+            throw new BusinessException(ErrorCode.PRODUCT_INVALID_NAME);
         }
     }
 
@@ -87,15 +87,21 @@ public class PopularProduct extends BaseTimeEntity {
         }
     }
 
-    private static void validateSource(String sourceName, String sourceUrl) {
-        if (sourceName == null || sourceName.isBlank() || sourceUrl == null || sourceUrl.isBlank()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "수집 출처 정보는 필수입니다.");
+    private static void validateSource(String sourceName, String sourceUrl, String thumbnailUrl) {
+        if (sourceName == null || sourceName.isBlank() || sourceName.length() > 255) {
+            throw new BusinessException(ErrorCode.PRODUCT_INVALID_SOURCE);
+        }
+        if (sourceUrl == null || sourceUrl.isBlank() || sourceUrl.length() > 1000) {
+            throw new BusinessException(ErrorCode.PRODUCT_INVALID_SOURCE);
+        }
+        if (thumbnailUrl != null && thumbnailUrl.length() > 1000) {
+            throw new BusinessException(ErrorCode.PRODUCT_INVALID_SOURCE);
         }
     }
 
     private static void validateRank(int rank) {
         if (rank < 1) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "순위는 1 이상이어야 합니다.");
+            throw new BusinessException(ErrorCode.PRODUCT_INVALID_RANK);
         }
     }
 }
