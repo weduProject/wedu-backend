@@ -56,7 +56,14 @@ public enum ErrorCode {
             HttpStatus.BAD_REQUEST,
             "PRODUCT_400_SOURCE",
             "수집 출처 정보가 올바르지 않습니다."),
-    PRODUCT_INVALID_RANK(HttpStatus.BAD_REQUEST, "PRODUCT_400_RANK", "순위는 1 이상이어야 합니다.");
+    PRODUCT_INVALID_RANK(HttpStatus.BAD_REQUEST, "PRODUCT_400_RANK", "순위는 1 이상이어야 합니다."),
+
+    // --- proposal 도메인 ---
+    PROPOSAL_NOT_FOUND(HttpStatus.NOT_FOUND, "PROPOSAL_404", "나만의 프로포즈를 찾을 수 없습니다."),
+    PROPOSAL_OPTION_NOT_SELECTED(
+            HttpStatus.NOT_FOUND,
+            "PROPOSAL_OPTION_404",
+            "선택하지 않은 카테고리입니다.");
 
     private final HttpStatus status;
     private final String code;
