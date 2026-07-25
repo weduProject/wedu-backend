@@ -36,6 +36,10 @@ public enum ErrorCode {
             "AUTH_400_PROVIDER",
             "지원하지 않는 소셜 로그인 제공자입니다."),
     AUTH_OAUTH2_FAILED(HttpStatus.UNAUTHORIZED, "AUTH_401_OAUTH2", "소셜 로그인에 실패했습니다."),
+    AUTH_OAUTH_CODE_INVALID(
+            HttpStatus.UNAUTHORIZED,
+            "AUTH_401_CODE",
+            "유효하지 않거나 만료된 로그인 코드입니다."),
 
     // --- planner 도메인 ---
     PLANNER_DDAY_NOT_FOUND(HttpStatus.NOT_FOUND, "PLANNER_404", "등록된 결혼식 D-day를 찾을 수 없습니다."),

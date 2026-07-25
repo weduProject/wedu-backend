@@ -1,7 +1,9 @@
 package com.wedu.auth.dto;
 
+import com.wedu.user.domain.User;
+
 /**
- * 소셜 로그인 성공 결과. 핸들러가 프론트 콜백 URL 쿼리로 전달한다.
+ * 소셜 로그인 성공 결과. 일회용 코드 교환 API 응답으로도 쓰인다.
  */
 public record SocialLoginResult(
         String tokenType,
@@ -19,5 +21,14 @@ public record SocialLoginResult(
             boolean onboardingCompleted) {
         return new SocialLoginResult(
                 "Bearer", accessToken, userId, email, nickname, onboardingCompleted);
+    }
+
+    public static SocialLoginResult from(User user, String accessToken) {
+        return of(
+                accessToken,
+                user.getId(),
+                user.getEmail(),
+                user.getNickname().getValue(),
+                user.isOnboardingCompleted());
     }
 }

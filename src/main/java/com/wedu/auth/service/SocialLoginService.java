@@ -7,6 +7,7 @@ import com.wedu.user.domain.Nickname;
 import com.wedu.user.domain.User;
 import com.wedu.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,24 +20,25 @@ public class SocialLoginService {
 
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
+    private final SocialUserRegistrar socialUserRegistrar;
 
-    @Transactional
+    @Transactional(readOnly = true)
     public SocialLoginResult loginOrRegister(OAuth2UserInfo info) {
         User user = userRepository
                 .findByProviderAndSocialId(info.provider(), info.socialId())
-                .orElseGet(() -> userRepository.save(User.register(
-                        info.provider(),
-                        info.socialId(),
-                        info.email(),
-                        new Nickname(info.nickname()),
-                        info.profileImageUrl())));
+                .orElseGet(() -> registerOrGetExisting(info));
 
         String accessToken = jwtTokenProvider.createAccessToken(user.getId());
-        return SocialLoginResult.of(
-                accessToken,
-                user.getId(),
-                user.getEmail(),
-                user.getNickname().getValue(),
-                user.isOnboardingCompleted());
+        return SocialLoginResult.from(user, accessToken);
+    }
+
+    private User registerOrGetExisting(OAuth2UserInfo info) {
+        try {
+            return socialUserRegistrar.register(info);
+        } catch (DataIntegrityViolationException ex) {
+            return userRepository
+                    .findByProviderAndSocialId(info.provider(), info.socialId())
+                    .orElseThrow(() -> ex);
+        }
     }
 }

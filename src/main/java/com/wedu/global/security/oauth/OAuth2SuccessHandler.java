@@ -1,6 +1,7 @@
 package com.wedu.global.security.oauth;
 
 import com.wedu.auth.dto.SocialLoginResult;
+import com.wedu.auth.service.OAuthLoginCodeStore;
 import com.wedu.auth.service.SocialLoginService;
 import com.wedu.global.error.BusinessException;
 import com.wedu.global.error.ErrorCode;
@@ -18,7 +19,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
- * 소셜 로그인 성공 후 회원 조회/가입 → JWT 발급 → 프론트 콜백으로 리다이렉트한다.
+ * 소셜 로그인 성공 후 회원 조회/가입 → JWT 발급 → 일회용 코드로 프론트 콜백 리다이렉트한다.
  */
 @Slf4j
 @Component
@@ -27,6 +28,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     private final OAuth2UserInfoExtractor userInfoExtractor;
     private final SocialLoginService socialLoginService;
+    private final OAuthLoginCodeStore oAuthLoginCodeStore;
     private final HttpCookieOAuth2AuthorizationRequestRepository authorizationRequestRepository;
 
     @Value("${wedu.oauth2.frontend-redirect-uri}")
@@ -46,7 +48,8 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             OAuth2UserInfo userInfo = userInfoExtractor.extract(
                     oauthToken.getAuthorizedClientRegistrationId(), oauth2User.getAttributes());
             SocialLoginResult result = socialLoginService.loginOrRegister(userInfo);
-            response.sendRedirect(buildRedirectUri(result));
+            String code = oAuthLoginCodeStore.issue(result);
+            response.sendRedirect(buildRedirectUri(code, result));
         } catch (BusinessException ex) {
             log.warn("OAuth2 success handling failed: {}", ex.getMessage());
             response.sendRedirect(buildErrorRedirectUri(ex.getErrorCode().getCode()));
@@ -56,10 +59,9 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         }
     }
 
-    private String buildRedirectUri(SocialLoginResult result) {
+    private String buildRedirectUri(String code, SocialLoginResult result) {
         return UriComponentsBuilder.fromUriString(frontendRedirectUri)
-                .queryParam("accessToken", result.accessToken())
-                .queryParam("tokenType", result.tokenType())
+                .queryParam("code", code)
                 .queryParam("userId", result.userId())
                 .queryParam("onboardingCompleted", result.onboardingCompleted())
                 .build(true)

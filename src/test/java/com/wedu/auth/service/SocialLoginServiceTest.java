@@ -20,6 +20,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,6 +31,9 @@ class SocialLoginServiceTest {
 
     @Mock
     private JwtTokenProvider jwtTokenProvider;
+
+    @Mock
+    private SocialUserRegistrar socialUserRegistrar;
 
     @InjectMocks
     private SocialLoginService socialLoginService;
@@ -47,7 +51,7 @@ class SocialLoginServiceTest {
 
         when(userRepository.findByProviderAndSocialId(SocialProvider.KAKAO, "kakao-1"))
                 .thenReturn(Optional.empty());
-        when(userRepository.save(any(User.class))).thenReturn(saved);
+        when(socialUserRegistrar.register(info)).thenReturn(saved);
         when(jwtTokenProvider.createAccessToken(1L)).thenReturn("access-token");
 
         SocialLoginResult result = socialLoginService.loginOrRegister(info);
@@ -57,7 +61,7 @@ class SocialLoginServiceTest {
         assertThat(result.email()).isEqualTo("new@example.com");
         assertThat(result.nickname()).isEqualTo("신규");
         assertThat(result.onboardingCompleted()).isFalse();
-        verify(userRepository).save(any(User.class));
+        verify(socialUserRegistrar).register(info);
     }
 
     @Test
@@ -81,7 +85,30 @@ class SocialLoginServiceTest {
         assertThat(result.userId()).isEqualTo(2L);
         assertThat(result.nickname()).isEqualTo("기존");
         assertThat(result.onboardingCompleted()).isTrue();
-        verify(userRepository, never()).save(any(User.class));
+        verify(socialUserRegistrar, never()).register(any());
+    }
+
+    @Test
+    @DisplayName("동시 가입으로 unique 충돌이 나면 기존 사용자를 다시 조회한다")
+    void recoverFromConcurrentRegistration() {
+        OAuth2UserInfo info = new OAuth2UserInfo(
+                SocialProvider.KAKAO,
+                "kakao-race",
+                "race@example.com",
+                "레이스",
+                null);
+        User existing = user(3L, SocialProvider.KAKAO, "kakao-race", "race@example.com", "레이스", false);
+
+        when(userRepository.findByProviderAndSocialId(SocialProvider.KAKAO, "kakao-race"))
+                .thenReturn(Optional.empty(), Optional.of(existing));
+        when(socialUserRegistrar.register(info))
+                .thenThrow(new DataIntegrityViolationException("duplicate"));
+        when(jwtTokenProvider.createAccessToken(3L)).thenReturn("race-token");
+
+        SocialLoginResult result = socialLoginService.loginOrRegister(info);
+
+        assertThat(result.accessToken()).isEqualTo("race-token");
+        assertThat(result.userId()).isEqualTo(3L);
     }
 
     private User user(
