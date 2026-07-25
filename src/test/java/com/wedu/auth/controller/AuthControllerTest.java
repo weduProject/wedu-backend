@@ -11,6 +11,9 @@ import com.wedu.auth.dto.TempLoginResponse;
 import com.wedu.auth.service.TempLoginService;
 import com.wedu.global.config.SecurityConfig;
 import com.wedu.global.security.jwt.JwtTokenProvider;
+import com.wedu.global.security.oauth.HttpCookieOAuth2AuthorizationRequestRepository;
+import com.wedu.global.security.oauth.OAuth2FailureHandler;
+import com.wedu.global.security.oauth.OAuth2SuccessHandler;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +21,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(AuthController.class)
@@ -32,6 +36,18 @@ class AuthControllerTest {
 
     @MockBean
     private JwtTokenProvider jwtTokenProvider;
+
+    @MockBean
+    private OAuth2SuccessHandler oAuth2SuccessHandler;
+
+    @MockBean
+    private OAuth2FailureHandler oAuth2FailureHandler;
+
+    @MockBean
+    private HttpCookieOAuth2AuthorizationRequestRepository authorizationRequestRepository;
+
+    @MockBean
+    private ClientRegistrationRepository clientRegistrationRepository;
 
     @Test
     @DisplayName("임시 로그인 토큰을 발급한다")

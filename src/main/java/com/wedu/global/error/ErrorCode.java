@@ -27,6 +27,15 @@ public enum ErrorCode {
 
     // --- auth 도메인 ---
     AUTH_TEMP_LOGIN_DISABLED(HttpStatus.FORBIDDEN, "AUTH_403", "임시 로그인은 현재 사용할 수 없습니다."),
+    AUTH_EMAIL_REQUIRED(
+            HttpStatus.BAD_REQUEST,
+            "AUTH_400_EMAIL",
+            "소셜 계정에서 이메일을 가져올 수 없습니다. 이메일 제공에 동의해 주세요."),
+    AUTH_UNSUPPORTED_PROVIDER(
+            HttpStatus.BAD_REQUEST,
+            "AUTH_400_PROVIDER",
+            "지원하지 않는 소셜 로그인 제공자입니다."),
+    AUTH_OAUTH2_FAILED(HttpStatus.UNAUTHORIZED, "AUTH_401_OAUTH2", "소셜 로그인에 실패했습니다."),
 
     // --- planner 도메인 ---
     PLANNER_DDAY_NOT_FOUND(HttpStatus.NOT_FOUND, "PLANNER_404", "등록된 결혼식 D-day를 찾을 수 없습니다."),
