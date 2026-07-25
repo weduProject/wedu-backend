@@ -2,6 +2,7 @@ package com.wedu.product.controller;
 
 import com.wedu.global.response.ApiResponse;
 import com.wedu.product.domain.ProductCategory;
+import com.wedu.product.dto.ProductDetailResponse;
 import com.wedu.product.dto.ProductSummaryResponse;
 import com.wedu.product.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -36,5 +38,12 @@ public class ProductController {
             @Parameter(description = "최대 가격") @RequestParam(required = false) Integer maxPrice,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ApiResponse.ok(productService.search(category, keyword, minPrice, maxPrice, pageable));
+    }
+
+    /** 상품 상세 정보를 조회한다. */
+    @Operation(summary = "상품 상세 조회")
+    @GetMapping("/{productId}")
+    public ApiResponse<ProductDetailResponse> getDetail(@PathVariable Long productId) {
+        return ApiResponse.ok(productService.getDetail(productId));
     }
 }
