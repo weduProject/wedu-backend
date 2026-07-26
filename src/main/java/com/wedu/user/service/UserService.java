@@ -28,11 +28,17 @@ public class UserService {
         return UserProfileResponse.from(findByIdOrThrow(userId));
     }
 
-    /** 온보딩(002): 초기 설정 완료 처리. */
+    /**
+     * 온보딩(002): 초기 설정 완료 처리.
+     *
+     * <p>완료 플래그만 켠다. 닉네임·프로필 이미지는 {@link #updateProfile}({@code PATCH /api/users/me})로
+     * 따로 바꾼다.
+     */
     @Transactional
-    public void completeOnboarding(Long userId) {
+    public UserProfileResponse completeOnboarding(Long userId) {
         User user = findByIdOrThrow(userId);
         user.completeOnboarding();
+        return UserProfileResponse.from(user);
     }
 
     /** 마이페이지(018): 프로필 수정. */
