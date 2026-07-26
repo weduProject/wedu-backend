@@ -2,21 +2,27 @@ package com.wedu.global.config;
 
 import com.wedu.global.security.jwt.JwtAuthenticationFilter;
 import com.wedu.global.security.jwt.JwtTokenProvider;
+import com.wedu.global.security.oauth.HttpCookieOAuth2AuthorizationRequestRepository;
+import com.wedu.global.security.oauth.NoopOAuth2AuthorizedClientRepository;
+import com.wedu.global.security.oauth.OAuth2FailureHandler;
+import com.wedu.global.security.oauth.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepository;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
  * 애플리케이션 보안 정책.
  *
- * <p>세션 없는(stateless) JWT 인증. 공개 엔드포인트(인증/문서/헬스)를 제외한 모든 요청은 인증을 요구한다.
- * 소셜 로그인 성공 후 토큰 발급은 auth 컨텍스트(OAuth2 success handler)에서 처리한다.
+ * <p>세션 없는(stateless) JWT 인증. 소셜 로그인은 OAuth2 authorization code + 쿠키 기반
+ * authorization request 저장으로 처리하고, 성공 시 JWT 를 발급한다.
  */
 @Configuration
 @EnableWebSecurity
@@ -31,12 +37,24 @@ public class SecurityConfig {
         "/swagger-ui/**",
         "/v3/api-docs/**",
         "/actuator/health",
+        "/api/products/**",
     };
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
+    private final OAuth2FailureHandler oAuth2FailureHandler;
+    private final HttpCookieOAuth2AuthorizationRequestRepository authorizationRequestRepository;
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    @Primary
+    public OAuth2AuthorizedClientRepository oauth2AuthorizedClientRepository() {
+        return new NoopOAuth2AuthorizedClientRepository();
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(
+            HttpSecurity http, OAuth2AuthorizedClientRepository oauth2AuthorizedClientRepository)
+            throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
@@ -46,6 +64,12 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                         .anyRequest().authenticated())
+                .oauth2Login(oauth2 -> oauth2
+                        .authorizationEndpoint(endpoint -> endpoint
+                                .authorizationRequestRepository(authorizationRequestRepository))
+                        .authorizedClientRepository(oauth2AuthorizedClientRepository)
+                        .successHandler(oAuth2SuccessHandler)
+                        .failureHandler(oAuth2FailureHandler))
                 .addFilterBefore(
                         new JwtAuthenticationFilter(jwtTokenProvider),
                         UsernamePasswordAuthenticationFilter.class);
