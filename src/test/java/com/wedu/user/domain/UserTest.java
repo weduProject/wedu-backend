@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.wedu.global.error.BusinessException;
+import com.wedu.global.error.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -39,11 +40,14 @@ class UserTest {
     }
 
     @Test
-    @DisplayName("이미 온보딩한 사용자를 다시 온보딩하면 예외가 발생한다")
+    @DisplayName("이미 온보딩한 사용자를 다시 온보딩하면 USER_409 가 발생한다")
     void completeOnboardingTwiceFails() {
         User user = registerUser();
         user.completeOnboarding();
-        assertThatThrownBy(user::completeOnboarding).isInstanceOf(BusinessException.class);
+        assertThatThrownBy(user::completeOnboarding)
+                .isInstanceOf(BusinessException.class)
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.USER_ALREADY_ONBOARDED);
     }
 
     @Test

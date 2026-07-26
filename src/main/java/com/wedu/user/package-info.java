@@ -4,7 +4,8 @@
  * <p>포함 기능
  * <ul>
  *   <li>WEDU-001 회원 관리 — 소셜 로그인(KAKAO/NAVER/GOOGLE) 기반 가입/식별, JWT 발급</li>
- *   <li>WEDU-002 온보딩 — 최초 로그인 여부·초기 설정</li>
+ *   <li>WEDU-002 온보딩 — 최초 로그인 여부({@code onboardingCompleted})·완료 플래그.
+ *       닉네임/이미지는 {@code PATCH /api/users/me} 재사용, 완료는 {@code POST /api/users/me/onboarding}</li>
  *   <li>WEDU-018 마이페이지 — 프로필 조회/수정</li>
  * </ul>
  *
