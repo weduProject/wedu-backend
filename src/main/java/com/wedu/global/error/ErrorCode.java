@@ -40,6 +40,15 @@ public enum ErrorCode {
             HttpStatus.UNAUTHORIZED,
             "AUTH_401_CODE",
             "유효하지 않거나 만료된 로그인 코드입니다."),
+    AUTH_EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "AUTH_409_EMAIL", "이미 가입된 이메일입니다."),
+    AUTH_PASSWORD_CONFIRM_MISMATCH(
+            HttpStatus.BAD_REQUEST,
+            "AUTH_400_PASSWORD_CONFIRM",
+            "비밀번호 확인이 일치하지 않습니다."),
+    AUTH_INVALID_CREDENTIALS(
+            HttpStatus.UNAUTHORIZED,
+            "AUTH_401_CREDENTIALS",
+            "이메일 또는 비밀번호가 올바르지 않습니다."),
 
     // --- planner 도메인 ---
     PLANNER_DDAY_NOT_FOUND(HttpStatus.NOT_FOUND, "PLANNER_404", "등록된 결혼식 D-day를 찾을 수 없습니다."),

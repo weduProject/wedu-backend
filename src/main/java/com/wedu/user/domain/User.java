@@ -32,9 +32,12 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(
         name = "users",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_users_provider_social_id",
-                columnNames = {"provider", "social_id"}))
+        uniqueConstraints = {
+            @UniqueConstraint(
+                    name = "uk_users_provider_social_id",
+                    columnNames = {"provider", "social_id"}),
+            @UniqueConstraint(name = "uk_users_email", columnNames = "email")
+        })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends BaseTimeEntity {
 
@@ -47,11 +50,15 @@ public class User extends BaseTimeEntity {
     private SocialProvider provider;
 
     /** 소셜 제공자 내부의 사용자 고유 식별자. {@code provider} 와 함께 유일. */
-    @Column(name = "social_id", nullable = false, length = 100)
+    @Column(name = "social_id", nullable = false, length = 255)
     private String socialId;
 
     @Column(nullable = false, length = 255)
     private String email;
+
+    /** 자체 로그인 사용자만 가진다. 소셜 로그인 사용자는 null 이다. */
+    @Column(name = "password_hash", length = 255)
+    private String passwordHash;
 
     @Embedded
     private Nickname nickname;
@@ -68,12 +75,14 @@ public class User extends BaseTimeEntity {
             String socialId,
             String email,
             Nickname nickname,
-            String profileImageUrl) {
+            String profileImageUrl,
+            String passwordHash) {
         this.provider = provider;
         this.socialId = socialId;
         this.email = email;
         this.nickname = nickname;
         this.profileImageUrl = profileImageUrl;
+        this.passwordHash = passwordHash;
         this.onboardingCompleted = false;
     }
 
@@ -86,7 +95,7 @@ public class User extends BaseTimeEntity {
             String email,
             Nickname nickname,
             String profileImageUrl) {
-        if (provider == null) {
+        if (provider == null || provider == SocialProvider.LOCAL) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "소셜 제공자는 필수입니다.");
         }
         if (socialId == null || socialId.isBlank()) {
@@ -98,7 +107,21 @@ public class User extends BaseTimeEntity {
         if (nickname == null) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "닉네임은 필수입니다.");
         }
-        return new User(provider, socialId, email, nickname, profileImageUrl);
+        return new User(provider, socialId, email, nickname, profileImageUrl, null);
+    }
+
+    /** 이메일 기반 자체 로그인 가입 팩토리. 이메일은 자체 로그인 식별자도 겸한다. */
+    public static User registerLocal(String email, Nickname nickname, String passwordHash) {
+        if (email == null || email.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "이메일은 필수입니다.");
+        }
+        if (nickname == null) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "닉네임은 필수입니다.");
+        }
+        if (passwordHash == null || passwordHash.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "비밀번호 해시는 필수입니다.");
+        }
+        return new User(SocialProvider.LOCAL, email, email, nickname, null, passwordHash);
     }
 
     /**

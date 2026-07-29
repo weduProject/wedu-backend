@@ -39,7 +39,7 @@ class OAuth2UserInfoExtractorTest {
     void extractGoogleProfile() {
         Map<String, Object> attributes = Map.of(
                 "sub", "google-sub-001",
-                "email", "google@example.com",
+                "email", " Google@Example.com ",
                 "name", "구글닉",
                 "picture", "https://img.example/google.png");
 
@@ -66,10 +66,12 @@ class OAuth2UserInfoExtractorTest {
     @Test
     @DisplayName("지원하지 않는 provider 면 예외를 던진다")
     void rejectUnsupportedProvider() {
-        assertThatThrownBy(() -> extractor.extract("naver", Map.of("id", "1")))
-                .isInstanceOf(BusinessException.class)
-                .extracting(ex -> ((BusinessException) ex).getErrorCode())
-                .isEqualTo(ErrorCode.AUTH_UNSUPPORTED_PROVIDER);
+        for (String provider : new String[] {"naver", "facebook"}) {
+            assertThatThrownBy(() -> extractor.extract(provider, Map.of("id", "1")))
+                    .isInstanceOf(BusinessException.class)
+                    .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                    .isEqualTo(ErrorCode.AUTH_UNSUPPORTED_PROVIDER);
+        }
     }
 
     @Test

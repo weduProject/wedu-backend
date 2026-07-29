@@ -14,4 +14,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByProviderAndSocialId(SocialProvider provider, String socialId);
+
+    boolean existsByEmail(String email);
 }
