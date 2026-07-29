@@ -1,6 +1,8 @@
 package com.wedu.auth.service;
 
 import com.wedu.auth.dto.SocialLoginResult;
+import com.wedu.global.error.BusinessException;
+import com.wedu.global.error.ErrorCode;
 import com.wedu.global.security.jwt.JwtTokenProvider;
 import com.wedu.global.security.oauth.OAuth2UserInfo;
 import com.wedu.user.domain.User;
@@ -32,6 +34,9 @@ public class SocialLoginService {
     }
 
     private User registerOrGetExisting(OAuth2UserInfo info) {
+        if (userRepository.existsByEmail(info.email())) {
+            throw new BusinessException(ErrorCode.AUTH_EMAIL_ALREADY_EXISTS);
+        }
         try {
             return socialUserRegistrar.register(info);
         } catch (DataIntegrityViolationException ex) {

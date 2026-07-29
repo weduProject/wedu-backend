@@ -1,12 +1,15 @@
 package com.wedu.auth.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.wedu.auth.dto.SocialLoginResult;
+import com.wedu.global.error.BusinessException;
+import com.wedu.global.error.ErrorCode;
 import com.wedu.global.security.jwt.JwtTokenProvider;
 import com.wedu.global.security.oauth.OAuth2UserInfo;
 import com.wedu.user.domain.Nickname;
@@ -112,6 +115,27 @@ class SocialLoginServiceTest {
         assertThat(result.accessToken()).isEqualTo("race-token");
         assertThat(result.userId()).isEqualTo(3L);
         verify(socialUserRegistrar).findExisting(SocialProvider.KAKAO, "kakao-race");
+    }
+
+    @Test
+    @DisplayName("다른 로그인 방식으로 이미 가입된 이메일이면 소셜 신규 가입을 거부한다")
+    void rejectDuplicateEmailAcrossProviders() {
+        OAuth2UserInfo info = new OAuth2UserInfo(
+                SocialProvider.GOOGLE,
+                "google-dup",
+                "dup@example.com",
+                "중복",
+                null);
+
+        when(userRepository.findByProviderAndSocialId(SocialProvider.GOOGLE, "google-dup"))
+                .thenReturn(Optional.empty());
+        when(userRepository.existsByEmail("dup@example.com")).thenReturn(true);
+
+        assertThatThrownBy(() -> socialLoginService.loginOrRegister(info))
+                .isInstanceOf(BusinessException.class)
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.AUTH_EMAIL_ALREADY_EXISTS);
+        verify(socialUserRegistrar, never()).register(any());
     }
 
     private User user(

@@ -66,7 +66,7 @@ class OAuth2UserInfoExtractorTest {
     @Test
     @DisplayName("지원하지 않는 provider 면 예외를 던진다")
     void rejectUnsupportedProvider() {
-        assertThatThrownBy(() -> extractor.extract("naver", Map.of("id", "1")))
+        assertThatThrownBy(() -> extractor.extract("facebook", Map.of("id", "1")))
                 .isInstanceOf(BusinessException.class)
                 .extracting(ex -> ((BusinessException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.AUTH_UNSUPPORTED_PROVIDER);
