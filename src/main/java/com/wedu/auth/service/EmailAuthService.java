@@ -72,6 +72,6 @@ public class EmailAuthService {
 
     private boolean isEmailUniqueViolation(DataIntegrityViolationException ex) {
         String message = ex.getMostSpecificCause().getMessage();
-        return message != null && message.toLowerCase().contains("email");
+        return message != null && message.toLowerCase().contains("uk_users_email");
     }
 }

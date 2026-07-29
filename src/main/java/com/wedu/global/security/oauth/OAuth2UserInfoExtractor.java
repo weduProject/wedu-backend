@@ -75,9 +75,6 @@ public class OAuth2UserInfoExtractor {
     }
 
     private String requireEmail(String email) {
-        if (!StringUtils.hasText(email)) {
-            throw new BusinessException(ErrorCode.AUTH_EMAIL_REQUIRED);
-        }
         return EmailNormalizer.normalize(email);
     }
 
