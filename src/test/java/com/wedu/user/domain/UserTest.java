@@ -44,6 +44,16 @@ class UserTest {
     }
 
     @Test
+    @DisplayName("소셜 가입 팩토리는 LOCAL 제공자를 허용하지 않는다")
+    void registerRejectsLocalProvider() {
+        assertThatThrownBy(() ->
+                User.register(SocialProvider.LOCAL, "local-id", "wedu@example.com", new Nickname("완규"), null))
+                .isInstanceOf(BusinessException.class)
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.INVALID_INPUT);
+    }
+
+    @Test
     @DisplayName("이메일 회원가입은 비밀번호 해시가 필수다")
     void registerLocalRequiresPasswordHash() {
         assertThatThrownBy(() -> User.registerLocal("wedu@example.com", new Nickname("완규"), " "))

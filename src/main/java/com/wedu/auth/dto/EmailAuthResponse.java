@@ -11,7 +11,7 @@ public record EmailAuthResponse(
         String nickname,
         boolean onboardingCompleted) {
 
-    public static EmailAuthResponse of(String accessToken, User user) {
+    public static EmailAuthResponse from(String accessToken, User user) {
         return new EmailAuthResponse(
                 "Bearer",
                 accessToken,

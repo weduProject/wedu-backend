@@ -95,7 +95,7 @@ public class User extends BaseTimeEntity {
             String email,
             Nickname nickname,
             String profileImageUrl) {
-        if (provider == null) {
+        if (provider == null || provider == SocialProvider.LOCAL) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "소셜 제공자는 필수입니다.");
         }
         if (socialId == null || socialId.isBlank()) {

@@ -1,5 +1,6 @@
 package com.wedu.global.security.oauth;
 
+import com.wedu.auth.support.EmailNormalizer;
 import com.wedu.global.error.BusinessException;
 import com.wedu.global.error.ErrorCode;
 import com.wedu.user.domain.SocialProvider;
@@ -77,7 +78,7 @@ public class OAuth2UserInfoExtractor {
         if (!StringUtils.hasText(email)) {
             throw new BusinessException(ErrorCode.AUTH_EMAIL_REQUIRED);
         }
-        return email.trim();
+        return EmailNormalizer.normalize(email);
     }
 
     private String nicknameFromEmail(String email) {

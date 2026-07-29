@@ -1,6 +1,7 @@
 package com.wedu.auth.service;
 
 import com.wedu.auth.dto.SocialLoginResult;
+import com.wedu.auth.support.EmailNormalizer;
 import com.wedu.global.error.BusinessException;
 import com.wedu.global.error.ErrorCode;
 import com.wedu.global.security.jwt.JwtTokenProvider;
@@ -25,9 +26,10 @@ public class SocialLoginService {
 
     @Transactional(readOnly = true)
     public SocialLoginResult loginOrRegister(OAuth2UserInfo info) {
+        OAuth2UserInfo normalizedInfo = normalize(info);
         User user = userRepository
-                .findByProviderAndSocialId(info.provider(), info.socialId())
-                .orElseGet(() -> registerOrGetExisting(info));
+                .findByProviderAndSocialId(normalizedInfo.provider(), normalizedInfo.socialId())
+                .orElseGet(() -> registerOrGetExisting(normalizedInfo));
 
         String accessToken = jwtTokenProvider.createAccessToken(user.getId());
         return SocialLoginResult.from(user, accessToken);
@@ -42,7 +44,24 @@ public class SocialLoginService {
         } catch (DataIntegrityViolationException ex) {
             return socialUserRegistrar
                     .findExisting(info.provider(), info.socialId())
-                    .orElseThrow(() -> ex);
+                    .orElseThrow(() -> toDuplicateEmailOrRethrow(ex));
         }
+    }
+
+    private OAuth2UserInfo normalize(OAuth2UserInfo info) {
+        return new OAuth2UserInfo(
+                info.provider(),
+                info.socialId(),
+                EmailNormalizer.normalize(info.email()),
+                info.nickname(),
+                info.profileImageUrl());
+    }
+
+    private RuntimeException toDuplicateEmailOrRethrow(DataIntegrityViolationException ex) {
+        String message = ex.getMostSpecificCause().getMessage();
+        if (message != null && message.toLowerCase().contains("email")) {
+            return new BusinessException(ErrorCode.AUTH_EMAIL_ALREADY_EXISTS);
+        }
+        return ex;
     }
 }
