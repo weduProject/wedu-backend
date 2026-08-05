@@ -2,27 +2,24 @@ package com.wedu.global.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Properties;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.env.Environment;
+import org.springframework.test.context.ActiveProfiles;
 
+@SpringBootTest
+@ActiveProfiles("prod")
 class ProfileConfigurationTest {
+
+    @Autowired
+    private Environment environment;
 
     @Test
     void prodProfileDisablesSwaggerAndUsesNonDebugLogging() {
-        Properties properties = loadYaml("application-prod.yml");
-
-        assertThat(properties)
-                .containsEntry("springdoc.api-docs.enabled", false)
-                .containsEntry("springdoc.swagger-ui.enabled", false)
-                .containsEntry("logging.level.com.wedu", "INFO")
-                .containsEntry("logging.level.org.hibernate.SQL", "WARN");
-    }
-
-    private Properties loadYaml(String resourceName) {
-        YamlPropertiesFactoryBean factory = new YamlPropertiesFactoryBean();
-        factory.setResources(new ClassPathResource(resourceName));
-        return factory.getObject();
+        assertThat(environment.getProperty("springdoc.api-docs.enabled")).isEqualTo("false");
+        assertThat(environment.getProperty("springdoc.swagger-ui.enabled")).isEqualTo("false");
+        assertThat(environment.getProperty("logging.level.com.wedu")).isEqualTo("INFO");
+        assertThat(environment.getProperty("logging.level.org.hibernate.SQL")).isEqualTo("WARN");
     }
 }
