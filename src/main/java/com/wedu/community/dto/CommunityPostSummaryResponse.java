@@ -16,14 +16,15 @@ public record CommunityPostSummaryResponse(
         CommunityPostAuthorResponse author,
         boolean isMine,
         @Schema(description = "게시글 좋아요 수. 좋아요 PR 전에는 0") long likeCount,
-        @Schema(description = "게시글 댓글 수. 댓글 PR 전에는 0") long commentCount,
+        @Schema(description = "게시글의 댓글 및 답글 수") long commentCount,
         @Schema(description = "UTC 기준 작성 시각") LocalDateTime createdAt) {
 
-    /** 게시글과 조회자·작성자 공개 정보를 목록 응답으로 변환한다. */
+    /** 게시글과 실제 댓글 수를 목록 응답으로 변환한다. */
     public static CommunityPostSummaryResponse from(
             CommunityPost post,
             Long viewerId,
-            UserPublicProfileResponse profile) {
+            UserPublicProfileResponse profile,
+            long commentCount) {
         return new CommunityPostSummaryResponse(
                 post.getId(),
                 post.getTitle(),
@@ -35,7 +36,7 @@ public record CommunityPostSummaryResponse(
                         : CommunityPostAuthorResponse.from(profile),
                 post.isOwnedBy(viewerId),
                 0,
-                0,
+                commentCount,
                 post.getCreatedAt());
     }
 }

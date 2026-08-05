@@ -12,6 +12,7 @@ import com.wedu.community.domain.CommunityPost;
 import com.wedu.community.domain.PostTheme;
 import com.wedu.community.dto.CommunityPostCreateRequest;
 import com.wedu.community.dto.CommunityPostUpdateRequest;
+import com.wedu.community.repository.CommunityCommentRepository;
 import com.wedu.community.repository.CommunityPostRepository;
 import com.wedu.global.error.BusinessException;
 import com.wedu.global.error.ErrorCode;
@@ -39,11 +40,15 @@ class CommunityPostServiceTest {
     @Mock
     private UserService userService;
 
+    @Mock
+    private CommunityCommentRepository communityCommentRepository;
+
     private CommunityPostService communityPostService;
 
     @BeforeEach
     void setUp() {
-        communityPostService = new CommunityPostService(communityPostRepository, userService);
+        communityPostService = new CommunityPostService(
+                communityPostRepository, communityCommentRepository, userService);
     }
 
     @Test
@@ -116,6 +121,7 @@ class CommunityPostServiceTest {
         communityPostService.delete(1L, 10L);
 
         assertThat(updated.title()).isEqualTo("수정 제목");
+        verify(communityCommentRepository).deleteByPostId(10L);
         verify(communityPostRepository).delete(post);
     }
 

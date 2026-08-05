@@ -15,4 +15,5 @@ mysql -h <host> -u <user> -p <database> < scripts/migrations/V008__create_carts.
 mysql -h <host> -u <user> -p <database> < scripts/migrations/V009__create_wishlists.sql
 mysql -h <host> -u <user> -p <database> < scripts/migrations/V010__alter_users_for_email_auth.sql
 mysql -h <host> -u <user> -p <database> < scripts/migrations/V011__create_community_posts.sql
+mysql -h <host> -u <user> -p <database> < scripts/migrations/V012__create_community_comments.sql
 ```

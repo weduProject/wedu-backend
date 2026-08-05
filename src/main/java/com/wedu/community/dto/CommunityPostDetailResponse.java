@@ -20,13 +20,14 @@ public record CommunityPostDetailResponse(
         @Schema(description = "UTC 기준 작성 시각") LocalDateTime createdAt,
         @Schema(description = "UTC 기준 수정 시각") LocalDateTime updatedAt) {
 
-    /** 게시글과 조회자·작성자 공개 정보를 상세 응답으로 변환한다. */
+    /** 게시글과 실제 댓글 수를 상세 응답으로 변환한다. */
     public static CommunityPostDetailResponse from(
             CommunityPost post,
             Long viewerId,
-            UserPublicProfileResponse profile) {
+            UserPublicProfileResponse profile,
+            long commentCount) {
         CommunityPostSummaryResponse summary =
-                CommunityPostSummaryResponse.from(post, viewerId, profile);
+                CommunityPostSummaryResponse.from(post, viewerId, profile, commentCount);
         return new CommunityPostDetailResponse(
                 summary.postId(),
                 summary.title(),

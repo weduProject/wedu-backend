@@ -102,7 +102,23 @@ public enum ErrorCode {
     COMMUNITY_POST_FORBIDDEN(
             HttpStatus.FORBIDDEN,
             "COMMUNITY_POST_403",
-            "게시글을 수정하거나 삭제할 권한이 없습니다.");
+            "게시글을 수정하거나 삭제할 권한이 없습니다."),
+    COMMUNITY_COMMENT_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "COMMUNITY_COMMENT_404",
+            "댓글을 찾을 수 없습니다."),
+    COMMUNITY_COMMENT_FORBIDDEN(
+            HttpStatus.FORBIDDEN,
+            "COMMUNITY_COMMENT_403",
+            "댓글을 수정하거나 삭제할 권한이 없습니다."),
+    COMMUNITY_COMMENT_REPLY_NOT_ALLOWED(
+            HttpStatus.BAD_REQUEST,
+            "COMMUNITY_COMMENT_400_REPLY",
+            "답글에는 다시 답글을 작성할 수 없습니다."),
+    COMMUNITY_COMMENT_PARENT_REQUIRED(
+            HttpStatus.BAD_REQUEST,
+            "COMMUNITY_COMMENT_400_PARENT",
+            "최상위 댓글만 지정할 수 있습니다.");
 
     private final HttpStatus status;
     private final String code;
