@@ -3,6 +3,7 @@ package com.wedu.community.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -30,9 +31,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
@@ -122,6 +125,14 @@ class CommunityCommentServiceTest {
 
         assertThat(response.comments()).hasSize(1);
         assertThat(response.comments().getFirst().replyCount()).isEqualTo(1);
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        verify(commentRepository)
+                .findByPostIdAndParentIdIsNullOrderByCreatedAtAscIdAsc(
+                        eq(10L), pageableCaptor.capture());
+        Pageable pageable = pageableCaptor.getValue();
+        assertThat(pageable.getPageNumber()).isZero();
+        assertThat(pageable.getPageSize()).isEqualTo(20);
+        assertThat(pageable.getSort()).isEqualTo(Sort.unsorted());
     }
 
     @Test
@@ -186,8 +197,40 @@ class CommunityCommentServiceTest {
     }
 
     @Test
-    @DisplayName("작성자만 댓글을 수정하고 삭제할 수 있으며 부모 삭제 시 답글도 삭제한다")
-    void updateAndDeleteOwnedComment() {
+    @DisplayName("페이지 번호와 크기의 하한을 벗어나면 조회를 거절한다")
+    void rejectInvalidPageLowerBounds() {
+        assertThatThrownBy(() -> commentService.getComments(1L, 10L, -1, 20))
+                .isInstanceOf(BusinessException.class)
+                .extracting(exception -> ((BusinessException) exception).getErrorCode())
+                .isEqualTo(ErrorCode.INVALID_INPUT);
+        assertThatThrownBy(() -> commentService.getComments(1L, 10L, 0, 0))
+                .isInstanceOf(BusinessException.class)
+                .extracting(exception -> ((BusinessException) exception).getErrorCode())
+                .isEqualTo(ErrorCode.INVALID_INPUT);
+
+        verifyNoInteractions(postRepository, commentRepository, userService);
+    }
+
+    @Test
+    @DisplayName("비익명 댓글 작성자 프로필이 누락되면 사용자 없음 오류를 반환한다")
+    void rejectMissingPublicProfile() {
+        CommunityPost post = CommunityPost.create(1L, "제목", "본문", PostTheme.PROPOSAL, false);
+        CommunityComment comment = CommunityComment.createComment(10L, 2L, "댓글", false);
+        when(postRepository.findById(10L)).thenReturn(Optional.of(post));
+        when(commentRepository.findByPostIdAndParentIdIsNullOrderByCreatedAtAscIdAsc(
+                        any(Long.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(comment)));
+        when(userService.getPublicProfiles(Set.of(2L))).thenReturn(Map.of());
+
+        assertThatThrownBy(() -> commentService.getComments(3L, 10L, 0, 20))
+                .isInstanceOf(BusinessException.class)
+                .extracting(exception -> ((BusinessException) exception).getErrorCode())
+                .isEqualTo(ErrorCode.USER_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("작성자는 자신의 댓글을 수정할 수 있다")
+    void updateOwnedComment() {
         CommunityPost post = CommunityPost.create(2L, "제목", "본문", PostTheme.PROPOSAL, false);
         CommunityComment comment = CommunityComment.createComment(10L, 1L, "댓글", false);
         ReflectionTestUtils.setField(comment, "id", 20L);
@@ -196,10 +239,20 @@ class CommunityCommentServiceTest {
 
         var updated = commentService.update(
                 1L, 20L, new CommunityCommentUpdateRequest("수정", true));
-        commentService.delete(1L, 20L);
 
         assertThat(updated.content()).isEqualTo("수정");
         assertThat(updated.anonymous()).isTrue();
+    }
+
+    @Test
+    @DisplayName("작성자가 최상위 댓글을 삭제하면 답글도 함께 삭제한다")
+    void deleteOwnedCommentWithReplies() {
+        CommunityComment comment = CommunityComment.createComment(10L, 1L, "댓글", false);
+        ReflectionTestUtils.setField(comment, "id", 20L);
+        when(commentRepository.findById(20L)).thenReturn(Optional.of(comment));
+
+        commentService.delete(1L, 20L);
+
         verify(commentRepository).deleteByParentId(20L);
         verify(commentRepository).delete(comment);
     }

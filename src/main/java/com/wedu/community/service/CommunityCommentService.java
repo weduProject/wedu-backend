@@ -93,16 +93,10 @@ public class CommunityCommentService {
                         parent,
                         userId,
                         post.getAuthorId(),
-                        profiles.get(parent.getAuthorId()),
+                        resolveProfile(parent, profiles),
                         replyCounts.getOrDefault(parent.getId(), 0L)))
                 .toList();
-        return new CommunityCommentPageResponse(
-                comments,
-                parents.getNumber(),
-                parents.getSize(),
-                parents.getTotalElements(),
-                parents.getTotalPages(),
-                parents.hasNext());
+        return CommunityCommentPageResponse.from(parents, comments);
     }
 
     /** 특정 최상위 댓글의 1단계 답글을 페이징 조회한다. */
@@ -126,15 +120,9 @@ public class CommunityCommentService {
                         reply,
                         userId,
                         post.getAuthorId(),
-                        profiles.get(reply.getAuthorId())))
+                        resolveProfile(reply, profiles)))
                 .toList();
-        return new CommunityReplyPageResponse(
-                responses,
-                replies.getNumber(),
-                replies.getSize(),
-                replies.getTotalElements(),
-                replies.getTotalPages(),
-                replies.hasNext());
+        return CommunityReplyPageResponse.from(replies, responses);
     }
 
     /** 작성자가 댓글 또는 답글의 내용과 익명 여부를 수정한다. */
@@ -177,6 +165,18 @@ public class CommunityCommentService {
                 .map(CommunityComment::getAuthorId)
                 .toList());
         return authorIds.isEmpty() ? Map.of() : userService.getPublicProfiles(authorIds);
+    }
+
+    private UserPublicProfileResponse resolveProfile(
+            CommunityComment comment, Map<Long, UserPublicProfileResponse> profiles) {
+        if (comment.isAnonymous()) {
+            return null;
+        }
+        UserPublicProfileResponse profile = profiles.get(comment.getAuthorId());
+        if (profile == null) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        }
+        return profile;
     }
 
     private Map<Long, Long> loadReplyCounts(List<CommunityComment> parents) {

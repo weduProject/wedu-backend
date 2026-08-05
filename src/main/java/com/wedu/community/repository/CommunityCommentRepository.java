@@ -38,11 +38,11 @@ public interface CommunityCommentRepository extends JpaRepository<CommunityComme
     List<CommunityReplyCountProjection> countRepliesByParentIds(
             @Param("parentIds") Collection<Long> parentIds);
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM CommunityComment c WHERE c.parentId = :parentId")
     void deleteByParentId(@Param("parentId") Long parentId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM CommunityComment c WHERE c.postId = :postId")
     void deleteByPostId(@Param("postId") Long postId);
 }
