@@ -5,7 +5,14 @@ import com.wedu.global.error.ErrorCode;
 import com.wedu.user.domain.Nickname;
 import com.wedu.user.domain.User;
 import com.wedu.user.dto.UserProfileResponse;
+import com.wedu.user.dto.UserPublicProfileResponse;
 import com.wedu.user.repository.UserRepository;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +33,30 @@ public class UserService {
     @Transactional(readOnly = true)
     public UserProfileResponse getProfile(Long userId) {
         return UserProfileResponse.from(findByIdOrThrow(userId));
+    }
+
+    /** 다른 도메인에 공개 가능한 단일 사용자 프로필을 조회한다. */
+    @Transactional(readOnly = true)
+    public UserPublicProfileResponse getPublicProfile(Long userId) {
+        return UserPublicProfileResponse.from(findByIdOrThrow(userId));
+    }
+
+    /** 여러 작성자의 공개 프로필을 한 번에 조회해 사용자 ID로 반환한다. */
+    @Transactional(readOnly = true)
+    public Map<Long, UserPublicProfileResponse> getPublicProfiles(Collection<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return Map.of();
+        }
+        Set<Long> distinctUserIds = new HashSet<>(userIds);
+        Map<Long, UserPublicProfileResponse> profiles = userRepository.findAllById(distinctUserIds).stream()
+                .map(UserPublicProfileResponse::from)
+                .collect(Collectors.toUnmodifiableMap(
+                        UserPublicProfileResponse::userId,
+                        Function.identity()));
+        if (profiles.size() != distinctUserIds.size()) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        }
+        return profiles;
     }
 
     /**
