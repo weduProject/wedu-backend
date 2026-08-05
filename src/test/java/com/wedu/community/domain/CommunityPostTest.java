@@ -72,6 +72,21 @@ class CommunityPostTest {
                 .isInstanceOf(BusinessException.class);
     }
 
+    @Test
+    @DisplayName("앞뒤 공백 제거 후 코드 포인트 길이가 경계값인 제목과 본문은 허용한다")
+    void acceptNormalizedCodePointLimit() {
+        String title = "  " + "😀".repeat(100) + "  ";
+        String content = "  " + "😀".repeat(5000) + "  ";
+
+        CommunityPost post = CommunityPost.create(
+                1L, title, content, PostTheme.TIP_SHARING, false);
+
+        assertThat(post.getTitle()).isEqualTo("😀".repeat(100));
+        assertThat(post.getContent()).isEqualTo("😀".repeat(5000));
+        assertThat(post.getTitle().codePointCount(0, post.getTitle().length())).isEqualTo(100);
+        assertThat(post.getContent().codePointCount(0, post.getContent().length())).isEqualTo(5000);
+    }
+
     private CommunityPost post() {
         return CommunityPost.create(
                 1L, "프로포즈 장소 추천", "서울 지역을 찾고 있습니다.", PostTheme.PROPOSAL, false);

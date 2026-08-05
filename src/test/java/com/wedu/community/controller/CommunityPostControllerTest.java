@@ -75,6 +75,34 @@ class CommunityPostControllerTest {
     }
 
     @Test
+    @DisplayName("정규화 후 코드 포인트 길이가 경계값인 생성 요청은 검증을 통과한다")
+    void acceptNormalizedCodePointLimit() throws Exception {
+        when(communityPostService.create(eq(1L), any(CommunityPostCreateRequest.class)))
+                .thenReturn(detail());
+
+        mockMvc.perform(post("/api/community/posts")
+                        .with(authentication(authentication))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(normalizedLimitBody()))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("정규화 후 코드 포인트 길이가 경계값인 수정 요청은 검증을 통과한다")
+    void acceptNormalizedCodePointLimitOnUpdate() throws Exception {
+        when(communityPostService.update(eq(1L), eq(10L), any(CommunityPostUpdateRequest.class)))
+                .thenReturn(detail());
+
+        mockMvc.perform(put("/api/community/posts/10")
+                        .with(authentication(authentication))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(normalizedLimitBody()))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     @DisplayName("테마와 키워드로 게시글 목록을 조회한다")
     void search() throws Exception {
         when(communityPostService.search(
@@ -124,6 +152,12 @@ class CommunityPostControllerTest {
                   "anonymous":false
                 }
                 """;
+    }
+
+    private String normalizedLimitBody() {
+        return """
+                {"title":"  %s  ","content":"  %s  ","theme":"TIP_SHARING","anonymous":false}
+                """.formatted("😀".repeat(100), "😀".repeat(5000));
     }
 
     private CommunityPostSummaryResponse summary() {
