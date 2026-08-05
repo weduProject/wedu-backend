@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Auth", description = "인증")
 @RestController
 @RequestMapping("/api/auth")
-@Profile("!prod")
+@Profile("(local | dev) & !prod & !staging")
 @RequiredArgsConstructor
 public class AuthController {
 
