@@ -47,8 +47,8 @@ class FriendServiceTest {
         UserPublicProfileResponse result = friendService.addFriend(1L, "friend@wedu.com");
 
         assertThat(result.userId()).isEqualTo(2L);
-        verify(friendshipRepository).save(argThatUserIs(1L, 2L));
-        verify(friendshipRepository).save(argThatUserIs(2L, 1L));
+        verify(friendshipRepository).saveAndFlush(argThatUserIs(1L, 2L));
+        verify(friendshipRepository).saveAndFlush(argThatUserIs(2L, 1L));
     }
 
     @Test
@@ -57,6 +57,20 @@ class FriendServiceTest {
         UserPublicProfileResponse friendProfile = new UserPublicProfileResponse(2L, "상대닉네임", null);
         when(userService.getPublicProfileByEmail("friend@wedu.com")).thenReturn(friendProfile);
         when(friendshipRepository.existsByUserIdAndFriendUserId(1L, 2L)).thenReturn(true);
+
+        assertThatThrownBy(() -> friendService.addFriend(1L, "friend@wedu.com"))
+                .isInstanceOfSatisfying(BusinessException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.FRIEND_ALREADY_EXISTS));
+    }
+
+    @Test
+    @DisplayName("동시 추가로 DB 유니크 제약이 충돌해도 중복 친구 예외로 변환한다")
+    void convertUniqueConstraintViolationToFriendAlreadyExists() {
+        UserPublicProfileResponse friendProfile = new UserPublicProfileResponse(2L, "상대닉네임", null);
+        when(userService.getPublicProfileByEmail("friend@wedu.com")).thenReturn(friendProfile);
+        when(friendshipRepository.existsByUserIdAndFriendUserId(1L, 2L)).thenReturn(false);
+        when(friendshipRepository.saveAndFlush(argThatUserIs(1L, 2L)))
+                .thenThrow(new org.springframework.dao.DataIntegrityViolationException("duplicate"));
 
         assertThatThrownBy(() -> friendService.addFriend(1L, "friend@wedu.com"))
                 .isInstanceOfSatisfying(BusinessException.class, exception ->

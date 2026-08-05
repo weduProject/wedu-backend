@@ -8,6 +8,7 @@ import com.wedu.user.dto.UserPublicProfileResponse;
 import com.wedu.user.service.UserService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,8 +30,12 @@ public class FriendService {
             throw new BusinessException(ErrorCode.FRIEND_ALREADY_EXISTS);
         }
 
-        friendshipRepository.save(Friendship.create(userId, friendUserId));
-        friendshipRepository.save(Friendship.create(friendUserId, userId));
+        try {
+            friendshipRepository.saveAndFlush(Friendship.create(userId, friendUserId));
+            friendshipRepository.saveAndFlush(Friendship.create(friendUserId, userId));
+        } catch (DataIntegrityViolationException e) {
+            throw new BusinessException(ErrorCode.FRIEND_ALREADY_EXISTS);
+        }
 
         return friendProfile;
     }
