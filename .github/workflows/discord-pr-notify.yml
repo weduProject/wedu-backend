@@ -25,16 +25,18 @@ jobs:
           set -e
           if [ "$EVENT_ACTION" = "opened" ]; then
             TITLE="🆕 PR 생성 #$PR_NUMBER"
+            FOOTER="by $PR_USER · [PR 보기]($PR_URL)"
             COLOR=3447003
           elif [ "$MERGED" = "true" ]; then
-            TITLE="🔀 PR 머지 #$PR_NUMBER"
-            COLOR=10181046
+            TITLE="🎉 PR 머지 완료! #$PR_NUMBER"
+            FOOTER="$PR_USER 님 수고하셨습니다 🎉 · [PR 보기]($PR_URL)"
+            COLOR=5763719
           else
             echo "PR closed without merge — 알림 생략"
             exit 0
           fi
 
-          DESC=$(printf '**%s**\nby %s · [PR 보기](%s)' "$PR_TITLE" "$PR_USER" "$PR_URL")
+          DESC=$(printf '**%s**\n%s' "$PR_TITLE" "$FOOTER")
           PAYLOAD=$(jq -n \
             --arg title "$TITLE" \
             --arg desc "$DESC" \
