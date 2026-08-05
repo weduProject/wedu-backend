@@ -57,3 +57,31 @@ jobs:
             sed -i 's/\r$//' deploy.sh
             chmod +x deploy.sh
             bash deploy.sh
+
+      - name: Notify Discord (deploy result)
+        if: always()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          STATUS: ${{ job.status }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+          COMMIT_URL: ${{ github.event.head_commit.url }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ "$STATUS" = "success" ]; then
+            TITLE="✅ wedu-backend 배포 성공"
+            COLOR=3066993
+          else
+            TITLE="❌ wedu-backend 배포 실패"
+            COLOR=15158332
+          fi
+
+          PAYLOAD=$(jq -n \
+            --arg title "$TITLE" \
+            --arg desc "$COMMIT_MSG
+[커밋]($COMMIT_URL) · [실행 로그]($RUN_URL)" \
+            --argjson color "$COLOR" \
+            '{embeds: [{title: $title, description: $desc, color: $color}]}')
+
+          curl -sf -X POST "$DISCORD_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD"
