@@ -26,9 +26,15 @@ if [ -n "$PID" ]; then
 fi
 
 # 애플리케이션 실행
-# prod 는 application-prod.yml 에서 CORS_ALLOWED_ORIGINS 가 필수.
-# 서버에 환경변수가 없으면 로컬 프론트(Vite) 기본 Origin 을 사용한다.
+# CD(GitHub Secrets → ssh-action envs) 또는 서버 환경변수로 주입한다.
+# 비밀값(KAKAO_*/GOOGLE_*/JWT_SECRET)은 로그에 출력하지 않는다.
 export CORS_ALLOWED_ORIGINS="${CORS_ALLOWED_ORIGINS:-http://localhost:5173}"
+export OAUTH_FRONTEND_REDIRECT_URI="${OAUTH_FRONTEND_REDIRECT_URI:-http://localhost:5173/auth/callback}"
+
+if [ -z "${JWT_SECRET:-}" ]; then
+  echo "JWT_SECRET 이 없습니다. GitHub Secrets 또는 서버 환경변수로 주입하세요."
+  exit 1
+fi
 
 nohup java \
   -Dspring.profiles.active=prod \

@@ -47,15 +47,32 @@ jobs:
 
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          CORS_ALLOWED_ORIGINS: ${{ secrets.CORS_ALLOWED_ORIGINS }}
+          OAUTH_FRONTEND_REDIRECT_URI: ${{ secrets.OAUTH_FRONTEND_REDIRECT_URI }}
+          KAKAO_CLIENT_ID: ${{ secrets.KAKAO_CLIENT_ID }}
+          KAKAO_CLIENT_SECRET: ${{ secrets.KAKAO_CLIENT_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: CORS_ALLOWED_ORIGINS,OAUTH_FRONTEND_REDIRECT_URI,KAKAO_CLIENT_ID,KAKAO_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,JWT_SECRET
           script: |
             set -e
             cd /home/${{ secrets.EC2_USERNAME }}/app
             sed -i 's/\r$//' deploy.sh
             chmod +x deploy.sh
+            # Secret 미등록(빈 문자열)이 서버 기존 env 를 덮어쓰지 않게 한다.
+            for v in CORS_ALLOWED_ORIGINS OAUTH_FRONTEND_REDIRECT_URI \
+              KAKAO_CLIENT_ID KAKAO_CLIENT_SECRET \
+              GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET JWT_SECRET; do
+              if [ -z "${!v}" ]; then
+                unset "$v"
+              fi
+            done
             bash deploy.sh
 
       - name: Notify Discord (deploy result)
