@@ -1,0 +1,46 @@
+name: Discord PR Notify
+
+on:
+  pull_request:
+    types: [opened, closed]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Discord
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_USER: ${{ github.event.pull_request.user.login }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          EVENT_ACTION: ${{ github.event.action }}
+          MERGED: ${{ github.event.pull_request.merged }}
+        run: |
+          set -e
+          if [ "$EVENT_ACTION" = "opened" ]; then
+            TITLE="🆕 PR 생성 #$PR_NUMBER"
+            COLOR=3447003
+          elif [ "$MERGED" = "true" ]; then
+            TITLE="🔀 PR 머지 #$PR_NUMBER"
+            COLOR=10181046
+          else
+            echo "PR closed without merge — 알림 생략"
+            exit 0
+          fi
+
+          DESC=$(printf '**%s**\nby %s · [PR 보기](%s)' "$PR_TITLE" "$PR_USER" "$PR_URL")
+          PAYLOAD=$(jq -n \
+            --arg title "$TITLE" \
+            --arg desc "$DESC" \
+            --argjson color "$COLOR" \
+            '{embeds: [{title: $title, description: $desc, color: $color}]}')
+
+          curl -sf -X POST "$DISCORD_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD"
