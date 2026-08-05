@@ -34,10 +34,10 @@ jobs:
             exit 0
           fi
 
+          DESC=$(printf '**%s**\nby %s · [PR 보기](%s)' "$PR_TITLE" "$PR_USER" "$PR_URL")
           PAYLOAD=$(jq -n \
             --arg title "$TITLE" \
-            --arg desc "**$PR_TITLE**
-by $PR_USER · [PR 보기]($PR_URL)" \
+            --arg desc "$DESC" \
             --argjson color "$COLOR" \
             '{embeds: [{title: $title, description: $desc, color: $color}]}')
 

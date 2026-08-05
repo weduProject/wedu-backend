@@ -75,10 +75,10 @@ jobs:
             COLOR=15158332
           fi
 
+          DESC=$(printf '%s\n[커밋](%s) · [실행 로그](%s)' "$COMMIT_MSG" "$COMMIT_URL" "$RUN_URL")
           PAYLOAD=$(jq -n \
             --arg title "$TITLE" \
-            --arg desc "$COMMIT_MSG
-[커밋]($COMMIT_URL) · [실행 로그]($RUN_URL)" \
+            --arg desc "$DESC" \
             --argjson color "$COLOR" \
             '{embeds: [{title: $title, description: $desc, color: $color}]}')
 
