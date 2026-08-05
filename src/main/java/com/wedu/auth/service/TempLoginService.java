@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Profile({"local", "dev"})
+@Profile("(local | dev) & !prod & !staging")
 @RequiredArgsConstructor
 public class TempLoginService {
 

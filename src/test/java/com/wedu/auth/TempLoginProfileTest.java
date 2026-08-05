@@ -1,68 +1,96 @@
 package com.wedu.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 
 import com.wedu.auth.controller.AuthController;
 import com.wedu.auth.service.TempLoginService;
-import com.wedu.global.security.jwt.JwtTokenProvider;
-import com.wedu.user.repository.UserRepository;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.boot.test.context.runner.ApplicationContextRunner;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
+import org.springframework.test.context.ActiveProfiles;
 
-class TempLoginProfileTest {
+abstract class TempLoginProfileTest {
 
-    private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
-            .withUserConfiguration(TempLoginProfileTestConfig.class);
+    @Autowired
+    private ApplicationContext applicationContext;
 
-    @ParameterizedTest
-    @ValueSource(strings = {"local", "dev"})
-    @DisplayName("local/dev 프로파일에서는 임시 로그인 빈을 등록한다")
-    void registerTempLoginBeansOnAllowedProfiles(String profile) {
-        contextRunner
-                .withInitializer(context -> context.getEnvironment().setActiveProfiles(profile))
-                .run(context -> assertThat(context)
-                        .hasSingleBean(AuthController.class)
-                        .hasSingleBean(TempLoginService.class));
+    void assertTempLoginBeansRegistered() {
+        assertThat(applicationContext.getBeansOfType(AuthController.class)).hasSize(1);
+        assertThat(applicationContext.getBeansOfType(TempLoginService.class)).hasSize(1);
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {"prod", "staging"})
-    @DisplayName("local/dev 외 프로파일에서는 임시 로그인 빈을 등록하지 않는다")
-    void doNotRegisterTempLoginBeansOnDisallowedProfiles(String profile) {
-        contextRunner
-                .withInitializer(context -> context.getEnvironment().setActiveProfiles(profile))
-                .run(context -> assertThat(context)
-                        .doesNotHaveBean(AuthController.class)
-                        .doesNotHaveBean(TempLoginService.class));
+    void assertTempLoginBeansNotRegistered() {
+        assertThat(applicationContext.getBeansOfType(AuthController.class)).isEmpty();
+        assertThat(applicationContext.getBeansOfType(TempLoginService.class)).isEmpty();
     }
+}
+
+@SpringBootTest
+@ActiveProfiles("local")
+class TempLoginLocalProfileTest extends TempLoginProfileTest {
 
     @Test
-    @DisplayName("프로파일이 없으면 임시 로그인 빈을 등록하지 않는다")
-    void doNotRegisterTempLoginBeansWithoutProfile() {
-        contextRunner.run(context -> assertThat(context)
-                .doesNotHaveBean(AuthController.class)
-                .doesNotHaveBean(TempLoginService.class));
+    void registerTempLoginBeansOnLocalProfile() {
+        assertTempLoginBeansRegistered();
     }
+}
 
-    @TestConfiguration
-    @Import({AuthController.class, TempLoginService.class})
-    static class TempLoginProfileTestConfig {
+@SpringBootTest
+@ActiveProfiles("dev")
+class TempLoginDevProfileTest extends TempLoginProfileTest {
 
-        @Bean
-        UserRepository userRepository() {
-            return mock(UserRepository.class);
-        }
+    @Test
+    void registerTempLoginBeansOnDevProfile() {
+        assertTempLoginBeansRegistered();
+    }
+}
 
-        @Bean
-        JwtTokenProvider jwtTokenProvider() {
-            return mock(JwtTokenProvider.class);
-        }
+@SpringBootTest
+@ActiveProfiles("prod")
+class TempLoginProdProfileTest extends TempLoginProfileTest {
+
+    @Test
+    void doNotRegisterTempLoginBeansOnProdProfile() {
+        assertTempLoginBeansNotRegistered();
+    }
+}
+
+@SpringBootTest
+@ActiveProfiles("staging")
+class TempLoginStagingProfileTest extends TempLoginProfileTest {
+
+    @Test
+    void doNotRegisterTempLoginBeansOnStagingProfile() {
+        assertTempLoginBeansNotRegistered();
+    }
+}
+
+@SpringBootTest
+@ActiveProfiles({"prod", "dev"})
+class TempLoginProdDevProfileTest extends TempLoginProfileTest {
+
+    @Test
+    void doNotRegisterTempLoginBeansWhenProdAndDevProfilesAreActiveTogether() {
+        assertTempLoginBeansNotRegistered();
+    }
+}
+
+@SpringBootTest
+@ActiveProfiles({"staging", "local"})
+class TempLoginStagingLocalProfileTest extends TempLoginProfileTest {
+
+    @Test
+    void doNotRegisterTempLoginBeansWhenStagingAndLocalProfilesAreActiveTogether() {
+        assertTempLoginBeansNotRegistered();
+    }
+}
+
+@SpringBootTest
+class TempLoginNoProfileTest extends TempLoginProfileTest {
+
+    @Test
+    void doNotRegisterTempLoginBeansWithoutProfile() {
+        assertTempLoginBeansNotRegistered();
     }
 }
