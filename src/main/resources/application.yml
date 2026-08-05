@@ -63,14 +63,11 @@ wedu:
     frontend-redirect-uri: ${OAUTH_FRONTEND_REDIRECT_URI:http://localhost:3000/auth/callback}
 
 springdoc:
-  api-docs:
-    enabled: false
   swagger-ui:
-    enabled: false
     path: /swagger-ui.html
     operations-sorter: method
 
 logging:
   level:
-    com.wedu: INFO
-    org.hibernate.SQL: WARN
+    com.wedu: DEBUG
+    org.hibernate.SQL: DEBUG
