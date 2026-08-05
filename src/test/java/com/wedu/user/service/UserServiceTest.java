@@ -96,6 +96,30 @@ class UserServiceTest {
     }
 
     @Test
+    @DisplayName("이메일로 사용자를 찾아 공개 프로필을 반환한다")
+    void getPublicProfileByEmail() {
+        User user = sampleUser();
+        ReflectionTestUtils.setField(user, "id", 1L);
+        when(userRepository.findByEmail("wedu@example.com")).thenReturn(Optional.of(user));
+
+        UserPublicProfileResponse response = userService.getPublicProfileByEmail("wedu@example.com");
+
+        assertThat(response.userId()).isEqualTo(1L);
+        assertThat(response.nickname()).isEqualTo("완규");
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 이메일로 조회하면 예외가 발생한다")
+    void getPublicProfileByEmailNotFound() {
+        when(userRepository.findByEmail("nobody@example.com")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.getPublicProfileByEmail("nobody@example.com"))
+                .isInstanceOf(BusinessException.class)
+                .extracting(exception -> ((BusinessException) exception).getErrorCode())
+                .isEqualTo(ErrorCode.USER_NOT_FOUND);
+    }
+
+    @Test
     @DisplayName("온보딩 완료 유스케이스가 엔티티 상태를 바꾸고 프로필을 반환한다")
     void completeOnboarding() {
         User user = sampleUser();

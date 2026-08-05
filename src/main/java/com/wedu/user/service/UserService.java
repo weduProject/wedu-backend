@@ -41,6 +41,14 @@ public class UserService {
         return UserPublicProfileResponse.from(findByIdOrThrow(userId));
     }
 
+    /** 이메일로 사용자를 찾아 공개 프로필을 조회한다(친구 추가 등 다른 도메인에서 사용). */
+    @Transactional(readOnly = true)
+    public UserPublicProfileResponse getPublicProfileByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .map(UserPublicProfileResponse::from)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    }
+
     /** 여러 작성자의 공개 프로필을 한 번에 조회해 사용자 ID로 반환한다. */
     @Transactional(readOnly = true)
     public Map<Long, UserPublicProfileResponse> getPublicProfiles(Collection<Long> userIds) {

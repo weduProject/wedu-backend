@@ -118,7 +118,17 @@ public enum ErrorCode {
     COMMUNITY_COMMENT_PARENT_REQUIRED(
             HttpStatus.BAD_REQUEST,
             "COMMUNITY_COMMENT_400_PARENT",
-            "최상위 댓글만 지정할 수 있습니다.");
+            "최상위 댓글만 지정할 수 있습니다."),
+
+    // --- friend 도메인 ---
+    FRIEND_SELF_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "FRIEND_400", "자기 자신은 친구로 추가할 수 없습니다."),
+    FRIEND_ALREADY_EXISTS(HttpStatus.CONFLICT, "FRIEND_409", "이미 친구로 등록된 사용자입니다."),
+    FRIEND_NOT_FOUND(HttpStatus.NOT_FOUND, "FRIEND_404", "친구로 등록되지 않은 사용자입니다."),
+    FRIEND_ACCESS_FORBIDDEN(
+            HttpStatus.FORBIDDEN,
+            "FRIEND_403",
+            "친구로 등록된 사용자만 편집할 수 있습니다."),
+    SHARE_LINK_NOT_FOUND(HttpStatus.NOT_FOUND, "SHARE_LINK_404", "유효하지 않은 공유 링크입니다.");
 
     private final HttpStatus status;
     private final String code;
