@@ -26,6 +26,10 @@ if [ -n "$PID" ]; then
 fi
 
 # 애플리케이션 실행
+# prod 는 application-prod.yml 에서 CORS_ALLOWED_ORIGINS 가 필수.
+# 서버에 환경변수가 없으면 로컬 프론트(Vite) 기본 Origin 을 사용한다.
+export CORS_ALLOWED_ORIGINS="${CORS_ALLOWED_ORIGINS:-http://localhost:5173}"
+
 nohup java \
   -Dspring.profiles.active=prod \
   -Dfile.encoding=UTF-8 \
