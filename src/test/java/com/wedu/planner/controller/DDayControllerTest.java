@@ -11,6 +11,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.wedu.friend.service.FriendAccessService;
+import com.wedu.friend.service.ShareLinkService;
 import com.wedu.global.error.BusinessException;
 import com.wedu.global.error.ErrorCode;
 import com.wedu.planner.dto.DDayResponse;
@@ -37,6 +39,12 @@ class DDayControllerTest {
 
     @MockBean
     private DDayService dDayService;
+
+    @MockBean
+    private FriendAccessService friendAccessService;
+
+    @MockBean
+    private ShareLinkService shareLinkService;
 
     private final UsernamePasswordAuthenticationToken authentication =
             new UsernamePasswordAuthenticationToken(
