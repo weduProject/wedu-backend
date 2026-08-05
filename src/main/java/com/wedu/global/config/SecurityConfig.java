@@ -1,5 +1,7 @@
 package com.wedu.global.config;
 
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
+
 import com.wedu.global.security.jwt.JwtAuthenticationFilter;
 import com.wedu.global.security.jwt.JwtTokenProvider;
 import com.wedu.global.security.oauth.HttpCookieOAuth2AuthorizationRequestRepository;
@@ -17,8 +19,10 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepository;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 /**
  * 애플리케이션 보안 정책.
@@ -71,6 +75,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                         .anyRequest().authenticated())
+                .exceptionHandling(exception -> exception.defaultAuthenticationEntryPointFor(
+                        new HttpStatusEntryPoint(UNAUTHORIZED),
+                        new AntPathRequestMatcher("/api/**")))
                 .oauth2Login(oauth2 -> oauth2
                         .authorizationEndpoint(endpoint -> endpoint
                                 .authorizationRequestRepository(authorizationRequestRepository))

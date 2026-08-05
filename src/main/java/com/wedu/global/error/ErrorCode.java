@@ -92,7 +92,17 @@ public enum ErrorCode {
 
     // --- proposal 도메인 (찜하기) ---
     WISHLIST_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "WISHLIST_404", "찜하지 않은 상품입니다."),
-    WISHLIST_ITEM_ALREADY_EXISTS(HttpStatus.CONFLICT, "WISHLIST_409", "이미 찜한 상품입니다.");
+    WISHLIST_ITEM_ALREADY_EXISTS(HttpStatus.CONFLICT, "WISHLIST_409", "이미 찜한 상품입니다."),
+
+    // --- community 도메인 ---
+    COMMUNITY_POST_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "COMMUNITY_POST_404",
+            "게시글을 찾을 수 없습니다."),
+    COMMUNITY_POST_FORBIDDEN(
+            HttpStatus.FORBIDDEN,
+            "COMMUNITY_POST_403",
+            "게시글을 수정하거나 삭제할 권한이 없습니다.");
 
     private final HttpStatus status;
     private final String code;
