@@ -7,6 +7,7 @@ import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 /**
  * Swagger(OpenAPI 3) 문서 설정. {@code /swagger-ui/index.html} 에서 확인.
@@ -14,6 +15,7 @@ import org.springframework.context.annotation.Configuration;
  * <p>Bearer(JWT) 인증 스킴을 등록해, 문서 UI 에서 토큰을 넣고 인증 API 를 호출할 수 있게 한다.
  */
 @Configuration
+@Profile({"local", "dev"})
 public class SwaggerConfig {
 
     private static final String BEARER_SCHEME = "bearerAuth";
