@@ -17,15 +17,18 @@ public record CommunityPostSummaryResponse(
         boolean anonymous,
         CommunityPostAuthorResponse author,
         boolean isMine,
-        @Schema(description = "게시글 좋아요 수. 좋아요 PR 전에는 0") long likeCount,
+        @Schema(description = "게시글 좋아요 수") long likeCount,
+        @Schema(description = "현재 사용자의 좋아요 여부") boolean likedByMe,
         @Schema(description = "게시글의 댓글 및 답글 수") long commentCount,
         @Schema(description = "UTC 기준 작성 시각", example = "2026-08-06T01:00:00Z") OffsetDateTime createdAt) {
 
-    /** 게시글과 실제 댓글 수를 목록 응답으로 변환한다. */
+    /** 게시글과 실제 좋아요·댓글 상태를 목록 응답으로 변환한다. */
     public static CommunityPostSummaryResponse from(
             CommunityPost post,
             Long viewerId,
             UserPublicProfileResponse profile,
+            long likeCount,
+            boolean likedByMe,
             long commentCount) {
         return new CommunityPostSummaryResponse(
                 post.getId(),
@@ -37,7 +40,8 @@ public record CommunityPostSummaryResponse(
                         ? CommunityPostAuthorResponse.anonymous()
                         : CommunityPostAuthorResponse.from(profile),
                 post.isOwnedBy(viewerId),
-                0,
+                likeCount,
+                likedByMe,
                 commentCount,
                 toUtc(post.getCreatedAt()));
     }

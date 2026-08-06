@@ -13,12 +13,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.wedu.community.dto.CommunityCommentAuthorResponse;
 import com.wedu.community.dto.CommunityCommentCreateRequest;
 import com.wedu.community.dto.CommunityCommentPageResponse;
 import com.wedu.community.dto.CommunityCommentResponse;
 import com.wedu.community.dto.CommunityCommentSummaryResponse;
 import com.wedu.community.dto.CommunityCommentUpdateRequest;
-import com.wedu.community.dto.CommunityCommentAuthorResponse;
 import com.wedu.community.dto.CommunityReplyPageResponse;
 import com.wedu.community.service.CommunityCommentService;
 import java.time.OffsetDateTime;
@@ -129,6 +129,8 @@ class CommunityCommentControllerTest {
                 new CommunityCommentAuthorResponse(1L, "작성자", null),
                 true,
                 true,
+                0,
+                false,
                 now,
                 now);
     }
@@ -143,6 +145,8 @@ class CommunityCommentControllerTest {
                 response.author(),
                 response.isMine(),
                 response.isPostAuthor(),
+                response.likeCount(),
+                response.likedByMe(),
                 0,
                 response.createdAt(),
                 response.updatedAt());

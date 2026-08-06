@@ -8,6 +8,8 @@ import com.wedu.community.dto.CommunityCommentResponse;
 import com.wedu.community.dto.CommunityCommentSummaryResponse;
 import com.wedu.community.dto.CommunityCommentUpdateRequest;
 import com.wedu.community.dto.CommunityReplyPageResponse;
+import com.wedu.community.repository.CommunityCommentLikeCountProjection;
+import com.wedu.community.repository.CommunityCommentLikeRepository;
 import com.wedu.community.repository.CommunityCommentRepository;
 import com.wedu.community.repository.CommunityPostRepository;
 import com.wedu.community.repository.CommunityReplyCountProjection;
@@ -36,6 +38,7 @@ public class CommunityCommentService {
     private static final int MAX_PAGE_SIZE = 50;
 
     private final CommunityCommentRepository commentRepository;
+    private final CommunityCommentLikeRepository commentLikeRepository;
     private final CommunityPostRepository postRepository;
     private final UserService userService;
 
@@ -88,12 +91,16 @@ public class CommunityCommentService {
                         postId, PageRequest.of(normalizedPage, normalizedSize));
         Map<Long, UserPublicProfileResponse> profiles = loadPublicProfiles(parents.getContent());
         Map<Long, Long> replyCounts = loadReplyCounts(parents.getContent());
+        Map<Long, Long> likeCounts = loadLikeCounts(parents.getContent());
+        Set<Long> likedCommentIds = loadLikedCommentIds(userId, parents.getContent());
         List<CommunityCommentSummaryResponse> comments = parents.getContent().stream()
                 .map(parent -> CommunityCommentSummaryResponse.from(
                         parent,
                         userId,
                         post.getAuthorId(),
                         resolveProfile(parent, profiles),
+                        likeCounts.getOrDefault(parent.getId(), 0L),
+                        likedCommentIds.contains(parent.getId()),
                         replyCounts.getOrDefault(parent.getId(), 0L)))
                 .toList();
         return CommunityCommentPageResponse.from(parents, comments);
@@ -115,12 +122,16 @@ public class CommunityCommentService {
                 commentRepository.findByParentIdOrderByCreatedAtAscIdAsc(
                         parent.getId(), PageRequest.of(normalizedPage, normalizedSize));
         Map<Long, UserPublicProfileResponse> profiles = loadPublicProfiles(replies.getContent());
+        Map<Long, Long> likeCounts = loadLikeCounts(replies.getContent());
+        Set<Long> likedCommentIds = loadLikedCommentIds(userId, replies.getContent());
         List<CommunityCommentResponse> responses = replies.getContent().stream()
                 .map(reply -> CommunityCommentResponse.from(
                         reply,
                         userId,
                         post.getAuthorId(),
-                        resolveProfile(reply, profiles)))
+                        resolveProfile(reply, profiles),
+                        likeCounts.getOrDefault(reply.getId(), 0L),
+                        likedCommentIds.contains(reply.getId())))
                 .toList();
         return CommunityReplyPageResponse.from(replies, responses);
     }
@@ -141,7 +152,8 @@ public class CommunityCommentService {
     @Transactional
     public void delete(Long userId, Long commentId) {
         validateUserId(userId);
-        CommunityComment comment = findOwnedComment(userId, commentId);
+        CommunityComment comment = findOwnedCommentForUpdate(userId, commentId);
+        commentLikeRepository.deleteByCommentIdAndReplies(comment.getId());
         if (!comment.isReply()) {
             commentRepository.deleteByParentId(comment.getId());
         }
@@ -155,7 +167,13 @@ public class CommunityCommentService {
         UserPublicProfileResponse profile = comment.isAnonymous()
                 ? null
                 : userService.getPublicProfile(comment.getAuthorId());
-        return CommunityCommentResponse.from(comment, viewerId, postAuthorId, profile);
+        return CommunityCommentResponse.from(
+                comment,
+                viewerId,
+                postAuthorId,
+                profile,
+                commentLikeRepository.countByCommentId(comment.getId()),
+                commentLikeRepository.existsByCommentIdAndUserId(comment.getId(), viewerId));
     }
 
     private Map<Long, UserPublicProfileResponse> loadPublicProfiles(
@@ -190,8 +208,36 @@ public class CommunityCommentService {
                         CommunityReplyCountProjection::getReplyCount));
     }
 
+    private Map<Long, Long> loadLikeCounts(List<CommunityComment> comments) {
+        List<Long> commentIds = comments.stream().map(CommunityComment::getId).toList();
+        if (commentIds.isEmpty()) {
+            return Map.of();
+        }
+        return commentLikeRepository.countByCommentIds(commentIds).stream()
+                .collect(Collectors.toMap(
+                        CommunityCommentLikeCountProjection::getCommentId,
+                        CommunityCommentLikeCountProjection::getLikeCount));
+    }
+
+    private Set<Long> loadLikedCommentIds(Long userId, Collection<CommunityComment> comments) {
+        List<Long> commentIds = comments.stream().map(CommunityComment::getId).toList();
+        return commentIds.isEmpty()
+                ? Set.of()
+                : Set.copyOf(commentLikeRepository.findLikedCommentIds(userId, commentIds));
+    }
+
     private CommunityComment findOwnedComment(Long userId, Long commentId) {
         CommunityComment comment = findComment(commentId);
+        if (!comment.isOwnedBy(userId)) {
+            throw new BusinessException(ErrorCode.COMMUNITY_COMMENT_FORBIDDEN);
+        }
+        return comment;
+    }
+
+    private CommunityComment findOwnedCommentForUpdate(Long userId, Long commentId) {
+        validatePositiveId(commentId, "댓글 식별자");
+        CommunityComment comment = commentRepository.findByIdForUpdate(commentId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.COMMUNITY_COMMENT_NOT_FOUND));
         if (!comment.isOwnedBy(userId)) {
             throw new BusinessException(ErrorCode.COMMUNITY_COMMENT_FORBIDDEN);
         }

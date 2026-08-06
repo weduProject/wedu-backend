@@ -10,11 +10,15 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.wedu.community.domain.CommunityPost;
+import com.wedu.community.domain.CommunityPostSort;
 import com.wedu.community.domain.PostTheme;
 import com.wedu.community.dto.CommunityPostCreateRequest;
 import com.wedu.community.dto.CommunityPostUpdateRequest;
-import com.wedu.community.repository.CommunityCommentRepository;
 import com.wedu.community.repository.CommunityCommentCountProjection;
+import com.wedu.community.repository.CommunityCommentLikeRepository;
+import com.wedu.community.repository.CommunityCommentRepository;
+import com.wedu.community.repository.CommunityPostLikeCountProjection;
+import com.wedu.community.repository.CommunityPostLikeRepository;
 import com.wedu.community.repository.CommunityPostRepository;
 import com.wedu.global.error.BusinessException;
 import com.wedu.global.error.ErrorCode;
@@ -46,12 +50,22 @@ class CommunityPostServiceTest {
     @Mock
     private CommunityCommentRepository communityCommentRepository;
 
+    @Mock
+    private CommunityPostLikeRepository postLikeRepository;
+
+    @Mock
+    private CommunityCommentLikeRepository commentLikeRepository;
+
     private CommunityPostService communityPostService;
 
     @BeforeEach
     void setUp() {
         communityPostService = new CommunityPostService(
-                communityPostRepository, communityCommentRepository, userService);
+                communityPostRepository,
+                communityCommentRepository,
+                postLikeRepository,
+                commentLikeRepository,
+                userService);
     }
 
     @Test
@@ -95,8 +109,11 @@ class CommunityPostServiceTest {
                 2L, "웨딩 준비", "예식장 계약 팁", PostTheme.WEDDING_PREPARATION, false);
         ReflectionTestUtils.setField(post, "id", 10L);
         CommunityCommentCountProjection count = mock(CommunityCommentCountProjection.class);
+        CommunityPostLikeCountProjection likeCount = mock(CommunityPostLikeCountProjection.class);
         when(count.getPostId()).thenReturn(10L);
         when(count.getCommentCount()).thenReturn(3L);
+        when(likeCount.getPostId()).thenReturn(10L);
+        when(likeCount.getLikeCount()).thenReturn(5L);
         when(communityPostRepository.search(
                         eq(PostTheme.WEDDING_PREPARATION), eq("예식!%"), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(post)));
@@ -104,13 +121,22 @@ class CommunityPostServiceTest {
                 .thenReturn(Map.of(2L, new UserPublicProfileResponse(2L, "정보왕", null)));
         when(communityCommentRepository.countByPostIds(List.of(10L)))
                 .thenReturn(List.of(count));
+        when(postLikeRepository.countByPostIds(List.of(10L))).thenReturn(List.of(likeCount));
+        when(postLikeRepository.findLikedPostIds(1L, List.of(10L))).thenReturn(List.of(10L));
 
         var result = communityPostService.search(
-                1L, PostTheme.WEDDING_PREPARATION, " 예식% ", 0, 20);
+                1L,
+                PostTheme.WEDDING_PREPARATION,
+                " 예식% ",
+                CommunityPostSort.LATEST,
+                0,
+                20);
 
         assertThat(result.posts()).hasSize(1);
         assertThat(result.posts().getFirst().author().nickname()).isEqualTo("정보왕");
         assertThat(result.posts().getFirst().commentCount()).isEqualTo(3L);
+        assertThat(result.posts().getFirst().likeCount()).isEqualTo(5L);
+        assertThat(result.posts().getFirst().likedByMe()).isTrue();
         assertThat(result.hasNext()).isFalse();
     }
 
@@ -124,10 +150,14 @@ class CommunityPostServiceTest {
         when(userService.getPublicProfile(2L))
                 .thenReturn(new UserPublicProfileResponse(2L, "작성자", null));
         when(communityCommentRepository.countByPostId(10L)).thenReturn(4L);
+        when(postLikeRepository.countByPostId(10L)).thenReturn(6L);
+        when(postLikeRepository.existsByPostIdAndUserId(10L, 1L)).thenReturn(true);
 
         var response = communityPostService.getDetail(1L, 10L);
 
         assertThat(response.commentCount()).isEqualTo(4L);
+        assertThat(response.likeCount()).isEqualTo(6L);
+        assertThat(response.likedByMe()).isTrue();
     }
 
     @Test
@@ -136,6 +166,7 @@ class CommunityPostServiceTest {
         CommunityPost post = CommunityPost.create(
                 1L, "제목", "본문", PostTheme.PROPOSAL, false);
         when(communityPostRepository.findById(10L)).thenReturn(Optional.of(post));
+        when(communityPostRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(post));
         when(userService.getPublicProfile(1L))
                 .thenReturn(new UserPublicProfileResponse(1L, "작성자", null));
 
@@ -147,7 +178,10 @@ class CommunityPostServiceTest {
         communityPostService.delete(1L, 10L);
 
         assertThat(updated.title()).isEqualTo("수정 제목");
+        verify(commentLikeRepository).deleteByPostId(10L);
         verify(communityCommentRepository).deleteByPostId(10L);
+        verify(postLikeRepository).deleteByPostId(10L);
+        verify(communityPostRepository).findByIdForUpdate(10L);
         verify(communityPostRepository).delete(post);
     }
 
@@ -157,12 +191,17 @@ class CommunityPostServiceTest {
         CommunityPost post = CommunityPost.create(
                 2L, "제목", "본문", PostTheme.PROPOSAL, false);
         when(communityPostRepository.findById(10L)).thenReturn(Optional.of(post));
+        when(communityPostRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(post));
 
         assertThatThrownBy(() -> communityPostService.update(
                         1L,
                         10L,
                         new CommunityPostUpdateRequest(
                                 "수정", "본문", PostTheme.PROPOSAL, false)))
+                .isInstanceOf(BusinessException.class)
+                .extracting(exception -> ((BusinessException) exception).getErrorCode())
+                .isEqualTo(ErrorCode.COMMUNITY_POST_FORBIDDEN);
+        assertThatThrownBy(() -> communityPostService.delete(1L, 10L))
                 .isInstanceOf(BusinessException.class)
                 .extracting(exception -> ((BusinessException) exception).getErrorCode())
                 .isEqualTo(ErrorCode.COMMUNITY_POST_FORBIDDEN);
