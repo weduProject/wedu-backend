@@ -130,7 +130,9 @@ class CommunityPostControllerTest {
         mockMvc.perform(get("/api/community/posts/10")
                         .with(authentication(authentication)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.content").value("예식장 계약 팁을 알려주세요."));
+                .andExpect(jsonPath("$.data.content").value("예식장 계약 팁을 알려주세요."))
+                .andExpect(jsonPath("$.data.createdAt").value("2026-08-05T01:00:00Z"))
+                .andExpect(jsonPath("$.data.updatedAt").value("2026-08-05T01:00:00Z"));
         mockMvc.perform(put("/api/community/posts/10")
                         .with(authentication(authentication))
                         .with(csrf())
