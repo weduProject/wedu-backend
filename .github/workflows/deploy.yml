@@ -48,18 +48,18 @@ jobs:
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v1.0.3
         env:
+          CORS_ALLOWED_ORIGINS: ${{ secrets.CORS_ALLOWED_ORIGINS }}
+          OAUTH_FRONTEND_REDIRECT_URI: ${{ secrets.OAUTH_FRONTEND_REDIRECT_URI }}
           KAKAO_CLIENT_ID: ${{ secrets.KAKAO_CLIENT_ID }}
           KAKAO_CLIENT_SECRET: ${{ secrets.KAKAO_CLIENT_SECRET }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          OAUTH_FRONTEND_REDIRECT_URI: ${{ secrets.OAUTH_FRONTEND_REDIRECT_URI }}
-          CORS_ALLOWED_ORIGINS: ${{ secrets.CORS_ALLOWED_ORIGINS }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: KAKAO_CLIENT_ID,KAKAO_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,JWT_SECRET,OAUTH_FRONTEND_REDIRECT_URI,CORS_ALLOWED_ORIGINS
+          envs: CORS_ALLOWED_ORIGINS,OAUTH_FRONTEND_REDIRECT_URI,KAKAO_CLIENT_ID,KAKAO_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,JWT_SECRET
           script: |
             set -e
 
@@ -87,3 +87,31 @@ jobs:
             sed -i 's/\r$//' deploy.sh
             chmod +x deploy.sh
             bash deploy.sh
+
+      - name: Notify Discord (deploy result)
+        if: always()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          STATUS: ${{ job.status }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+          COMMIT_URL: ${{ github.event.head_commit.url }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ "$STATUS" = "success" ]; then
+            TITLE="✅ wedu-backend 배포 성공"
+            COLOR=3066993
+          else
+            TITLE="❌ wedu-backend 배포 실패"
+            COLOR=15158332
+          fi
+
+          DESC=$(printf '%s\n[커밋](%s) · [실행 로그](%s)' "$COMMIT_MSG" "$COMMIT_URL" "$RUN_URL")
+          PAYLOAD=$(jq -n \
+            --arg title "$TITLE" \
+            --arg desc "$DESC" \
+            --argjson color "$COLOR" \
+            '{embeds: [{title: $title, description: $desc, color: $color}]}')
+
+          curl -sf -X POST "$DISCORD_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD"

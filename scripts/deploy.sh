@@ -67,9 +67,10 @@ echo "서비스 재시작 완료"
 HEALTHY=0
 for i in $(seq 1 30); do
   sleep 1
-  if curl --fail --silent --show-error \
+  HEALTH_BODY=$(curl --fail --silent --show-error \
       --connect-timeout 2 --max-time 5 \
-      http://localhost:8080/api/products > /dev/null; then
+      http://localhost:8080/actuator/health 2>/dev/null) || continue
+  if echo "$HEALTH_BODY" | grep -q '"status"[[:space:]]*:[[:space:]]*"UP"'; then
     HEALTHY=1
     break
   fi

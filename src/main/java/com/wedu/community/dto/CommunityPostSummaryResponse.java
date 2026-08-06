@@ -5,6 +5,8 @@ import com.wedu.community.domain.PostTheme;
 import com.wedu.user.dto.UserPublicProfileResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 /** 커뮤니티 게시글 목록 카드 응답. */
 public record CommunityPostSummaryResponse(
@@ -15,15 +17,19 @@ public record CommunityPostSummaryResponse(
         boolean anonymous,
         CommunityPostAuthorResponse author,
         boolean isMine,
-        @Schema(description = "게시글 좋아요 수. 좋아요 PR 전에는 0") long likeCount,
-        @Schema(description = "게시글 댓글 수. 댓글 PR 전에는 0") long commentCount,
-        @Schema(description = "UTC 기준 작성 시각") LocalDateTime createdAt) {
+        @Schema(description = "게시글 좋아요 수") long likeCount,
+        @Schema(description = "현재 사용자의 좋아요 여부") boolean likedByMe,
+        @Schema(description = "게시글의 댓글 및 답글 수") long commentCount,
+        @Schema(description = "UTC 기준 작성 시각", example = "2026-08-06T01:00:00Z") OffsetDateTime createdAt) {
 
-    /** 게시글과 조회자·작성자 공개 정보를 목록 응답으로 변환한다. */
+    /** 게시글과 실제 좋아요·댓글 상태를 목록 응답으로 변환한다. */
     public static CommunityPostSummaryResponse from(
             CommunityPost post,
             Long viewerId,
-            UserPublicProfileResponse profile) {
+            UserPublicProfileResponse profile,
+            long likeCount,
+            boolean likedByMe,
+            long commentCount) {
         return new CommunityPostSummaryResponse(
                 post.getId(),
                 post.getTitle(),
@@ -34,8 +40,13 @@ public record CommunityPostSummaryResponse(
                         ? CommunityPostAuthorResponse.anonymous()
                         : CommunityPostAuthorResponse.from(profile),
                 post.isOwnedBy(viewerId),
-                0,
-                0,
-                post.getCreatedAt());
+                likeCount,
+                likedByMe,
+                commentCount,
+                toUtc(post.getCreatedAt()));
+    }
+
+    private static OffsetDateTime toUtc(LocalDateTime value) {
+        return value == null ? null : value.atOffset(ZoneOffset.UTC);
     }
 }

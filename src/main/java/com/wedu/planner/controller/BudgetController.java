@@ -1,5 +1,7 @@
 package com.wedu.planner.controller;
 
+import com.wedu.friend.service.FriendAccessService;
+import com.wedu.friend.service.ShareLinkService;
 import com.wedu.global.response.ApiResponse;
 import com.wedu.planner.dto.BudgetCompletionRequest;
 import com.wedu.planner.dto.BudgetItemCreateRequest;
@@ -31,6 +33,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class BudgetController {
 
     private final BudgetService budgetService;
+    private final FriendAccessService friendAccessService;
+    private final ShareLinkService shareLinkService;
 
     @Operation(summary = "예산 항목 생성")
     @PostMapping
@@ -75,5 +79,68 @@ public class BudgetController {
             @PathVariable Long itemId) {
         budgetService.delete(userId, itemId);
         return ApiResponse.ok();
+    }
+
+    /** 친구의 예산에 항목을 함께 추가한다. */
+    @Operation(summary = "친구 예산 항목 생성 (친구만 가능)")
+    @PostMapping("/friends/{ownerUserId}")
+    public ApiResponse<BudgetItemResponse> createFriendItem(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long ownerUserId,
+            @Valid @RequestBody BudgetItemCreateRequest request) {
+        friendAccessService.assertEditable(userId, ownerUserId);
+        return ApiResponse.ok(budgetService.create(ownerUserId, request));
+    }
+
+    /** 친구의 예산 현황을 조회한다. */
+    @Operation(summary = "친구 예산 현황 조회 (친구만 가능)")
+    @GetMapping("/friends/{ownerUserId}")
+    public ApiResponse<BudgetOverviewResponse> getFriendOverview(
+            @AuthenticationPrincipal Long userId, @PathVariable Long ownerUserId) {
+        friendAccessService.assertEditable(userId, ownerUserId);
+        return ApiResponse.ok(budgetService.getOverview(ownerUserId));
+    }
+
+    /** 친구의 예산 항목을 함께 수정한다. */
+    @Operation(summary = "친구 예산 항목 수정 (친구만 가능)")
+    @PutMapping("/friends/{ownerUserId}/{itemId}")
+    public ApiResponse<BudgetItemResponse> updateFriendItem(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long ownerUserId,
+            @PathVariable Long itemId,
+            @Valid @RequestBody BudgetItemUpdateRequest request) {
+        friendAccessService.assertEditable(userId, ownerUserId);
+        return ApiResponse.ok(budgetService.update(ownerUserId, itemId, request));
+    }
+
+    /** 친구의 예산 항목 결제 완료 상태를 함께 변경한다. */
+    @Operation(summary = "친구 예산 항목 완료 상태 변경 (친구만 가능)")
+    @PatchMapping("/friends/{ownerUserId}/{itemId}/completion")
+    public ApiResponse<BudgetItemResponse> changeFriendCompletion(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long ownerUserId,
+            @PathVariable Long itemId,
+            @Valid @RequestBody BudgetCompletionRequest request) {
+        friendAccessService.assertEditable(userId, ownerUserId);
+        return ApiResponse.ok(budgetService.changeCompletion(ownerUserId, itemId, request));
+    }
+
+    /** 친구의 예산 항목을 함께 삭제한다. */
+    @Operation(summary = "친구 예산 항목 삭제 (친구만 가능)")
+    @DeleteMapping("/friends/{ownerUserId}/{itemId}")
+    public ApiResponse<Void> deleteFriendItem(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long ownerUserId,
+            @PathVariable Long itemId) {
+        friendAccessService.assertEditable(userId, ownerUserId);
+        budgetService.delete(ownerUserId, itemId);
+        return ApiResponse.ok();
+    }
+
+    /** 공유 링크로 예산 현황을 조회 전용으로 확인한다(로그인 불필요). */
+    @Operation(summary = "공유 링크로 예산 현황 조회 (조회 전용)")
+    @GetMapping("/shared/{token}")
+    public ApiResponse<BudgetOverviewResponse> getSharedOverview(@PathVariable String token) {
+        return ApiResponse.ok(budgetService.getOverview(shareLinkService.resolveOwnerId(token)));
     }
 }

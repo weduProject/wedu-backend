@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.wedu.community.domain.CommunityPost;
 import com.wedu.community.domain.PostTheme;
 import com.wedu.community.repository.CommunityPostRepository;
+import com.wedu.community.repository.CommunityCommentRepository;
 import com.wedu.user.domain.Nickname;
 import com.wedu.user.domain.SocialProvider;
 import com.wedu.user.domain.User;
@@ -42,11 +43,15 @@ class CommunityPostIntegrationTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private CommunityCommentRepository communityCommentRepository;
+
     private Long userId;
     private Long otherUserId;
 
     @BeforeEach
     void setUp() {
+        communityCommentRepository.deleteAll();
         communityPostRepository.deleteAll();
         userRepository.deleteAll();
         userId = saveUser("author-1", "author@example.com", "예비신랑").getId();

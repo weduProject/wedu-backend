@@ -8,7 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.env.Environment;
 import org.springframework.test.context.ActiveProfiles;
 
-@SpringBootTest
+@SpringBootTest(properties = "CORS_ALLOWED_ORIGINS=https://frontend.example.com")
 @ActiveProfiles("prod")
 class ProfileConfigurationTest {
 
@@ -21,5 +21,7 @@ class ProfileConfigurationTest {
         assertThat(environment.getProperty("springdoc.swagger-ui.enabled")).isEqualTo("false");
         assertThat(environment.getProperty("logging.level.com.wedu")).isEqualTo("INFO");
         assertThat(environment.getProperty("logging.level.org.hibernate.SQL")).isEqualTo("WARN");
+        assertThat(environment.getProperty("wedu.cors.allowed-origins"))
+                .isEqualTo("https://frontend.example.com");
     }
 }

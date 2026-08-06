@@ -46,7 +46,7 @@ class TempLoginDevProfileTest extends TempLoginProfileTest {
     }
 }
 
-@SpringBootTest
+@SpringBootTest(properties = "CORS_ALLOWED_ORIGINS=https://frontend.example.com")
 @ActiveProfiles("prod")
 class TempLoginProdProfileTest extends TempLoginProfileTest {
 
@@ -66,7 +66,7 @@ class TempLoginStagingProfileTest extends TempLoginProfileTest {
     }
 }
 
-@SpringBootTest
+@SpringBootTest(properties = "CORS_ALLOWED_ORIGINS=https://frontend.example.com")
 @ActiveProfiles({"prod", "dev"})
 class TempLoginProdDevProfileTest extends TempLoginProfileTest {
 

@@ -1,12 +1,18 @@
 package com.wedu.community.service;
 
 import com.wedu.community.domain.CommunityPost;
+import com.wedu.community.domain.CommunityPostSort;
 import com.wedu.community.domain.PostTheme;
 import com.wedu.community.dto.CommunityPostCreateRequest;
 import com.wedu.community.dto.CommunityPostDetailResponse;
 import com.wedu.community.dto.CommunityPostPageResponse;
 import com.wedu.community.dto.CommunityPostSummaryResponse;
 import com.wedu.community.dto.CommunityPostUpdateRequest;
+import com.wedu.community.repository.CommunityCommentCountProjection;
+import com.wedu.community.repository.CommunityCommentLikeRepository;
+import com.wedu.community.repository.CommunityCommentRepository;
+import com.wedu.community.repository.CommunityPostLikeCountProjection;
+import com.wedu.community.repository.CommunityPostLikeRepository;
 import com.wedu.community.repository.CommunityPostRepository;
 import com.wedu.global.error.BusinessException;
 import com.wedu.global.error.ErrorCode;
@@ -16,6 +22,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -32,6 +39,9 @@ public class CommunityPostService {
     private static final int MAX_KEYWORD_LENGTH = 100;
 
     private final CommunityPostRepository communityPostRepository;
+    private final CommunityCommentRepository communityCommentRepository;
+    private final CommunityPostLikeRepository postLikeRepository;
+    private final CommunityCommentLikeRepository commentLikeRepository;
     private final UserService userService;
 
     /** 인증 사용자의 게시글을 생성한다. */
@@ -51,24 +61,36 @@ public class CommunityPostService {
         return toDetail(post, userId);
     }
 
-    /** 테마와 제목·본문 키워드로 최신 게시글을 페이징 조회한다. */
+    /** 테마·제목·본문 키워드와 정렬 기준으로 게시글을 페이징 조회한다. */
     @Transactional(readOnly = true)
     public CommunityPostPageResponse search(
             Long userId,
             PostTheme theme,
             String keyword,
+            CommunityPostSort sort,
             Integer page,
             Integer size) {
         validateUserId(userId);
         int normalizedPage = normalizePage(page);
         int normalizedSize = normalizeSize(size);
         String normalizedKeyword = normalizeKeyword(keyword);
-        Page<CommunityPost> result = communityPostRepository.search(
-                theme, normalizedKeyword, PageRequest.of(normalizedPage, normalizedSize));
+        CommunityPostSort normalizedSort = sort == null ? CommunityPostSort.LATEST : sort;
+        PageRequest pageable = PageRequest.of(normalizedPage, normalizedSize);
+        Page<CommunityPost> result = normalizedSort == CommunityPostSort.MOST_LIKED
+                ? communityPostRepository.searchMostLiked(theme, normalizedKeyword, pageable)
+                : communityPostRepository.search(theme, normalizedKeyword, pageable);
         Map<Long, UserPublicProfileResponse> profiles = loadPublicProfiles(result.getContent());
+        Map<Long, Long> commentCounts = loadCommentCounts(result.getContent());
+        Map<Long, Long> likeCounts = loadLikeCounts(result.getContent());
+        Set<Long> likedPostIds = loadLikedPostIds(userId, result.getContent());
         List<CommunityPostSummaryResponse> posts = result.getContent().stream()
                 .map(post -> CommunityPostSummaryResponse.from(
-                        post, userId, profiles.get(post.getAuthorId())))
+                        post,
+                        userId,
+                        profiles.get(post.getAuthorId()),
+                        likeCounts.getOrDefault(post.getId(), 0L),
+                        likedPostIds.contains(post.getId()),
+                        commentCounts.getOrDefault(post.getId(), 0L)))
                 .toList();
         return new CommunityPostPageResponse(
                 posts,
@@ -109,14 +131,24 @@ public class CommunityPostService {
     @Transactional
     public void delete(Long userId, Long postId) {
         validateUserId(userId);
-        communityPostRepository.delete(findOwnedPost(userId, postId));
+        CommunityPost post = findOwnedPostForUpdate(userId, postId);
+        commentLikeRepository.deleteByPostId(postId);
+        communityCommentRepository.deleteByPostId(postId);
+        postLikeRepository.deleteByPostId(postId);
+        communityPostRepository.delete(post);
     }
 
     private CommunityPostDetailResponse toDetail(CommunityPost post, Long viewerId) {
         UserPublicProfileResponse profile = post.isAnonymous()
                 ? null
                 : userService.getPublicProfile(post.getAuthorId());
-        return CommunityPostDetailResponse.from(post, viewerId, profile);
+        return CommunityPostDetailResponse.from(
+                post,
+                viewerId,
+                profile,
+                postLikeRepository.countByPostId(post.getId()),
+                postLikeRepository.existsByPostIdAndUserId(post.getId(), viewerId),
+                communityCommentRepository.countByPostId(post.getId()));
     }
 
     private Map<Long, UserPublicProfileResponse> loadPublicProfiles(List<CommunityPost> posts) {
@@ -127,8 +159,49 @@ public class CommunityPostService {
         return authorIds.isEmpty() ? Map.of() : userService.getPublicProfiles(authorIds);
     }
 
+    private Map<Long, Long> loadCommentCounts(List<CommunityPost> posts) {
+        List<Long> postIds = posts.stream().map(CommunityPost::getId).toList();
+        if (postIds.isEmpty()) {
+            return Map.of();
+        }
+        return communityCommentRepository.countByPostIds(postIds).stream()
+                .collect(Collectors.toMap(
+                        CommunityCommentCountProjection::getPostId,
+                        CommunityCommentCountProjection::getCommentCount));
+    }
+
+    private Map<Long, Long> loadLikeCounts(List<CommunityPost> posts) {
+        List<Long> postIds = posts.stream().map(CommunityPost::getId).toList();
+        if (postIds.isEmpty()) {
+            return Map.of();
+        }
+        return postLikeRepository.countByPostIds(postIds).stream()
+                .collect(Collectors.toMap(
+                        CommunityPostLikeCountProjection::getPostId,
+                        CommunityPostLikeCountProjection::getLikeCount));
+    }
+
+    private Set<Long> loadLikedPostIds(Long userId, List<CommunityPost> posts) {
+        List<Long> postIds = posts.stream().map(CommunityPost::getId).toList();
+        return postIds.isEmpty()
+                ? Set.of()
+                : Set.copyOf(postLikeRepository.findLikedPostIds(userId, postIds));
+    }
+
     private CommunityPost findOwnedPost(Long userId, Long postId) {
         CommunityPost post = findPost(postId);
+        if (!post.isOwnedBy(userId)) {
+            throw new BusinessException(ErrorCode.COMMUNITY_POST_FORBIDDEN);
+        }
+        return post;
+    }
+
+    private CommunityPost findOwnedPostForUpdate(Long userId, Long postId) {
+        if (postId == null) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "게시글 식별자는 필수입니다.");
+        }
+        CommunityPost post = communityPostRepository.findByIdForUpdate(postId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.COMMUNITY_POST_NOT_FOUND));
         if (!post.isOwnedBy(userId)) {
             throw new BusinessException(ErrorCode.COMMUNITY_POST_FORBIDDEN);
         }
@@ -160,7 +233,9 @@ public class CommunityPostService {
     private int normalizeSize(Integer size) {
         int normalized = size == null ? DEFAULT_PAGE_SIZE : size;
         if (normalized < 1 || normalized > MAX_PAGE_SIZE) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "페이지 크기는 1 이상 50 이하여야 합니다.");
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT,
+                    "페이지 크기는 1 이상 " + MAX_PAGE_SIZE + " 이하여야 합니다.");
         }
         return normalized;
     }

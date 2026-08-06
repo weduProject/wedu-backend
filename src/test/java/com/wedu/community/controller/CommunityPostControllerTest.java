@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.wedu.community.domain.CommunityPostSort;
 import com.wedu.community.domain.PostTheme;
 import com.wedu.community.dto.CommunityPostAuthorResponse;
 import com.wedu.community.dto.CommunityPostCreateRequest;
@@ -21,7 +22,7 @@ import com.wedu.community.dto.CommunityPostPageResponse;
 import com.wedu.community.dto.CommunityPostSummaryResponse;
 import com.wedu.community.dto.CommunityPostUpdateRequest;
 import com.wedu.community.service.CommunityPostService;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -106,7 +107,12 @@ class CommunityPostControllerTest {
     @DisplayName("테마와 키워드로 게시글 목록을 조회한다")
     void search() throws Exception {
         when(communityPostService.search(
-                        1L, PostTheme.WEDDING_PREPARATION, "예식장", 0, 20))
+                        1L,
+                        PostTheme.WEDDING_PREPARATION,
+                        "예식장",
+                        CommunityPostSort.LATEST,
+                        0,
+                        20))
                 .thenReturn(new CommunityPostPageResponse(
                         List.of(summary()), 0, 20, 1, 1, false));
 
@@ -130,7 +136,9 @@ class CommunityPostControllerTest {
         mockMvc.perform(get("/api/community/posts/10")
                         .with(authentication(authentication)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.content").value("예식장 계약 팁을 알려주세요."));
+                .andExpect(jsonPath("$.data.content").value("예식장 계약 팁을 알려주세요."))
+                .andExpect(jsonPath("$.data.createdAt").value("2026-08-05T01:00:00Z"))
+                .andExpect(jsonPath("$.data.updatedAt").value("2026-08-05T01:00:00Z"));
         mockMvc.perform(put("/api/community/posts/10")
                         .with(authentication(authentication))
                         .with(csrf())
@@ -170,8 +178,9 @@ class CommunityPostControllerTest {
                 new CommunityPostAuthorResponse(1L, "예비신랑", null),
                 true,
                 0,
+                false,
                 0,
-                LocalDateTime.of(2026, 8, 5, 1, 0));
+                OffsetDateTime.parse("2026-08-05T01:00:00Z"));
     }
 
     private CommunityPostDetailResponse detail() {
@@ -179,6 +188,6 @@ class CommunityPostControllerTest {
         return new CommunityPostDetailResponse(
                 summary.postId(), summary.title(), summary.content(), summary.theme(),
                 summary.anonymous(), summary.author(), summary.isMine(), summary.likeCount(),
-                summary.commentCount(), summary.createdAt(), summary.createdAt());
+                summary.likedByMe(), summary.commentCount(), summary.createdAt(), summary.createdAt());
     }
 }
