@@ -62,17 +62,30 @@ jobs:
           envs: CORS_ALLOWED_ORIGINS,OAUTH_FRONTEND_REDIRECT_URI,KAKAO_CLIENT_ID,KAKAO_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,JWT_SECRET
           script: |
             set -e
+
+            for name in KAKAO_CLIENT_ID KAKAO_CLIENT_SECRET GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET JWT_SECRET OAUTH_FRONTEND_REDIRECT_URI CORS_ALLOWED_ORIGINS; do
+              if [ -z "$(printenv "$name")" ]; then
+                echo "GitHub secret is missing: $name"
+                exit 1
+              fi
+            done
+
+            sudo mkdir -p /etc/wedu
+            {
+              printf '%s\n' "KAKAO_CLIENT_ID=$KAKAO_CLIENT_ID"
+              printf '%s\n' "KAKAO_CLIENT_SECRET=$KAKAO_CLIENT_SECRET"
+              printf '%s\n' "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID"
+              printf '%s\n' "GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET"
+              printf '%s\n' "JWT_SECRET=$JWT_SECRET"
+              printf '%s\n' "OAUTH_FRONTEND_REDIRECT_URI=$OAUTH_FRONTEND_REDIRECT_URI"
+              printf '%s\n' "CORS_ALLOWED_ORIGINS=$CORS_ALLOWED_ORIGINS"
+              printf '%s\n' "SERVER_FORWARD_HEADERS_STRATEGY=framework"
+            } | sudo tee /etc/wedu/wedu-github.env > /dev/null
+            sudo chmod 600 /etc/wedu/wedu-github.env
+
             cd /home/${{ secrets.EC2_USERNAME }}/app
             sed -i 's/\r$//' deploy.sh
             chmod +x deploy.sh
-            # Secret 미등록(빈 문자열)이 서버 기존 env 를 덮어쓰지 않게 한다.
-            for v in CORS_ALLOWED_ORIGINS OAUTH_FRONTEND_REDIRECT_URI \
-              KAKAO_CLIENT_ID KAKAO_CLIENT_SECRET \
-              GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET JWT_SECRET; do
-              if [ -z "${!v}" ]; then
-                unset "$v"
-              fi
-            done
             bash deploy.sh
 
       - name: Notify Discord (deploy result)

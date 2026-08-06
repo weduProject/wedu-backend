@@ -2,6 +2,9 @@
 
 APP_DIR=$(dirname "$(readlink -f "$0")")
 APP_NAME="wedu-backend"
+SERVICE_NAME="wedu"
+BASE_ENV_FILE="/etc/wedu/wedu.env"
+GITHUB_ENV_FILE="/etc/wedu/wedu-github.env"
 JAR_FILE=$(ls -t "$APP_DIR"/*.jar 2>/dev/null | head -1)
 LOG_FILE="$APP_DIR/app.log"
 
@@ -13,37 +16,52 @@ fi
 echo "=== $APP_NAME 배포 시작 ==="
 echo "JAR: $JAR_FILE"
 
-# 기존 프로세스 종료
-PID=$(pgrep -f "$APP_NAME.*\.jar")
-if [ -n "$PID" ]; then
-  echo "기존 프로세스 종료 (PID: $PID)"
-  kill -15 "$PID"
-  sleep 5
-  # graceful shutdown 실패 시 강제 종료
-  if kill -0 "$PID" 2>/dev/null; then
-    kill -9 "$PID"
-  fi
-fi
-
-# 애플리케이션 실행
-# CD(GitHub Secrets → ssh-action envs) 또는 서버 환경변수로 주입한다.
-# 비밀값(KAKAO_*/GOOGLE_*/JWT_SECRET)은 로그에 출력하지 않는다.
-export CORS_ALLOWED_ORIGINS="${CORS_ALLOWED_ORIGINS:-http://localhost:5173}"
-export OAUTH_FRONTEND_REDIRECT_URI="${OAUTH_FRONTEND_REDIRECT_URI:-http://localhost:5173/auth/callback}"
-
-if [ -z "${JWT_SECRET:-}" ]; then
-  echo "JWT_SECRET 이 없습니다. GitHub Secrets 또는 서버 환경변수로 주입하세요."
+if [ ! -f "$BASE_ENV_FILE" ]; then
+  echo "환경변수 파일을 찾을 수 없습니다: $BASE_ENV_FILE"
+  echo "DB_URL, DB_USERNAME, DB_PASSWORD 등 서버별 비밀값을 먼저 설정하세요."
   exit 1
 fi
 
-nohup java \
-  -Dspring.profiles.active=prod \
-  -Dfile.encoding=UTF-8 \
-  -jar "$JAR_FILE" \
-  > "$LOG_FILE" 2>&1 &
+echo "systemd 서비스 설정 갱신"
+sudo tee "/etc/systemd/system/$SERVICE_NAME.service" > /dev/null <<EOF
+[Unit]
+Description=WEDU Backend
+After=network.target
 
-NEW_PID=$!
-echo "새 프로세스 시작 (PID: $NEW_PID)"
+[Service]
+User=$(whoami)
+WorkingDirectory=$APP_DIR
+EnvironmentFile=$BASE_ENV_FILE
+EnvironmentFile=-$GITHUB_ENV_FILE
+Environment="SERVER_FORWARD_HEADERS_STRATEGY=framework"
+ExecStart=/usr/bin/java -Dspring.profiles.active=prod -Dfile.encoding=UTF-8 -jar $JAR_FILE
+Restart=always
+RestartSec=5
+StandardOutput=append:$LOG_FILE
+StandardError=append:$LOG_FILE
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable "$SERVICE_NAME"
+
+# 이전 nohup 배포 프로세스가 남아 있으면 8080 포트 충돌을 막기 위해 정리한다.
+if ! sudo systemctl is-active --quiet "$SERVICE_NAME"; then
+  PID=$(pgrep -f "$APP_NAME.*\.jar" || true)
+  if [ -n "$PID" ]; then
+    echo "기존 프로세스 종료 (PID: $PID)"
+    kill -15 "$PID" || true
+    sleep 5
+    if kill -0 "$PID" 2>/dev/null; then
+      kill -9 "$PID" || true
+    fi
+  fi
+fi
+
+sudo systemctl restart "$SERVICE_NAME"
+echo "서비스 재시작 완료"
 
 # 헬스체크 (최대 30초)
 HEALTHY=0
@@ -59,7 +77,9 @@ for i in $(seq 1 30); do
 done
 
 if [ "$HEALTHY" -ne 1 ]; then
-  echo "헬스체크 실패 — 로그를 확인하세요: $LOG_FILE"
+  echo "헬스체크 실패 — 서비스 상태와 로그를 확인하세요."
+  sudo systemctl status "$SERVICE_NAME" --no-pager -l || true
+  sudo journalctl -u "$SERVICE_NAME" -n 100 --no-pager -l || true
   exit 1
 fi
 
