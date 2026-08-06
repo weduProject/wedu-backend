@@ -61,7 +61,7 @@ public class CommunityPostService {
         return toDetail(post, userId);
     }
 
-    /** 테마와 제목·본문 키워드로 최신 게시글을 페이징 조회한다. */
+    /** 테마·제목·본문 키워드와 정렬 기준으로 게시글을 페이징 조회한다. */
     @Transactional(readOnly = true)
     public CommunityPostPageResponse search(
             Long userId,
@@ -131,7 +131,7 @@ public class CommunityPostService {
     @Transactional
     public void delete(Long userId, Long postId) {
         validateUserId(userId);
-        CommunityPost post = findOwnedPost(userId, postId);
+        CommunityPost post = findOwnedPostForUpdate(userId, postId);
         commentLikeRepository.deleteByPostId(postId);
         communityCommentRepository.deleteByPostId(postId);
         postLikeRepository.deleteByPostId(postId);
@@ -190,6 +190,18 @@ public class CommunityPostService {
 
     private CommunityPost findOwnedPost(Long userId, Long postId) {
         CommunityPost post = findPost(postId);
+        if (!post.isOwnedBy(userId)) {
+            throw new BusinessException(ErrorCode.COMMUNITY_POST_FORBIDDEN);
+        }
+        return post;
+    }
+
+    private CommunityPost findOwnedPostForUpdate(Long userId, Long postId) {
+        if (postId == null) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "게시글 식별자는 필수입니다.");
+        }
+        CommunityPost post = communityPostRepository.findByIdForUpdate(postId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.COMMUNITY_POST_NOT_FOUND));
         if (!post.isOwnedBy(userId)) {
             throw new BusinessException(ErrorCode.COMMUNITY_POST_FORBIDDEN);
         }

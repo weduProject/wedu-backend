@@ -1,5 +1,6 @@
 package com.wedu.community.controller;
 
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -80,5 +81,33 @@ class CommunityLikeControllerTest {
         mockMvc.perform(post("/api/community/posts/10/likes")
                         .with(authentication(authentication)))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("좋아요 대상 ID가 0 이하이면 요청을 거절한다")
+    void rejectNonPositiveTargetId() throws Exception {
+        mockMvc.perform(post("/api/community/posts/0/likes")
+                        .with(authentication(authentication))
+                        .with(csrf()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("COMMON_400"));
+        mockMvc.perform(delete("/api/community/posts/-1/likes")
+                        .with(authentication(authentication))
+                        .with(csrf()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("COMMON_400"));
+        mockMvc.perform(post("/api/community/comments/0/likes")
+                        .with(authentication(authentication))
+                        .with(csrf()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("COMMON_400"));
+        mockMvc.perform(delete("/api/community/comments/-1/likes")
+                        .with(authentication(authentication))
+                        .with(csrf()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("COMMON_400"));
+
+        verifyNoInteractions(likeService);
     }
 }

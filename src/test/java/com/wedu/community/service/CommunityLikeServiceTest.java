@@ -7,10 +7,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.wedu.community.domain.CommunityCommentLike;
 import com.wedu.community.domain.CommunityComment;
-import com.wedu.community.domain.CommunityPostLike;
+import com.wedu.community.domain.CommunityCommentLike;
 import com.wedu.community.domain.CommunityPost;
+import com.wedu.community.domain.CommunityPostLike;
 import com.wedu.community.domain.PostTheme;
 import com.wedu.community.repository.CommunityCommentLikeRepository;
 import com.wedu.community.repository.CommunityCommentRepository;
@@ -18,13 +18,13 @@ import com.wedu.community.repository.CommunityPostLikeRepository;
 import com.wedu.community.repository.CommunityPostRepository;
 import com.wedu.global.error.BusinessException;
 import com.wedu.global.error.ErrorCode;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 class CommunityLikeServiceTest {

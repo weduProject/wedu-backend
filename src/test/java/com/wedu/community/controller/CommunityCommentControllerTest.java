@@ -13,12 +13,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.wedu.community.dto.CommunityCommentAuthorResponse;
 import com.wedu.community.dto.CommunityCommentCreateRequest;
 import com.wedu.community.dto.CommunityCommentPageResponse;
 import com.wedu.community.dto.CommunityCommentResponse;
 import com.wedu.community.dto.CommunityCommentSummaryResponse;
 import com.wedu.community.dto.CommunityCommentUpdateRequest;
-import com.wedu.community.dto.CommunityCommentAuthorResponse;
 import com.wedu.community.dto.CommunityReplyPageResponse;
 import com.wedu.community.service.CommunityCommentService;
 import java.time.OffsetDateTime;

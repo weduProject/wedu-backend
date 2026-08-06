@@ -15,8 +15,8 @@ import com.wedu.community.domain.CommunityPost;
 import com.wedu.community.domain.PostTheme;
 import com.wedu.community.dto.CommunityCommentCreateRequest;
 import com.wedu.community.dto.CommunityCommentUpdateRequest;
-import com.wedu.community.repository.CommunityCommentRepository;
 import com.wedu.community.repository.CommunityCommentLikeRepository;
+import com.wedu.community.repository.CommunityCommentRepository;
 import com.wedu.community.repository.CommunityPostRepository;
 import com.wedu.community.repository.CommunityReplyCountProjection;
 import com.wedu.global.error.BusinessException;
@@ -31,8 +31,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -252,10 +252,11 @@ class CommunityCommentServiceTest {
     void deleteOwnedCommentWithReplies() {
         CommunityComment comment = CommunityComment.createComment(10L, 1L, "댓글", false);
         ReflectionTestUtils.setField(comment, "id", 20L);
-        when(commentRepository.findById(20L)).thenReturn(Optional.of(comment));
+        when(commentRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(comment));
 
         commentService.delete(1L, 20L);
 
+        verify(commentRepository).findByIdForUpdate(20L);
         verify(commentLikeRepository).deleteByCommentIdAndReplies(20L);
         verify(commentRepository).deleteByParentId(20L);
         verify(commentRepository).delete(comment);
@@ -266,6 +267,7 @@ class CommunityCommentServiceTest {
     void rejectUnownedComment() {
         CommunityComment comment = CommunityComment.createComment(10L, 2L, "댓글", false);
         when(commentRepository.findById(20L)).thenReturn(Optional.of(comment));
+        when(commentRepository.findByIdForUpdate(20L)).thenReturn(Optional.of(comment));
 
         assertThatThrownBy(() -> commentService.update(
                         1L, 20L, new CommunityCommentUpdateRequest("수정", false)))

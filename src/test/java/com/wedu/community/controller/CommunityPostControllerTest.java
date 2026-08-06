@@ -13,8 +13,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.wedu.community.domain.PostTheme;
 import com.wedu.community.domain.CommunityPostSort;
+import com.wedu.community.domain.PostTheme;
 import com.wedu.community.dto.CommunityPostAuthorResponse;
 import com.wedu.community.dto.CommunityPostCreateRequest;
 import com.wedu.community.dto.CommunityPostDetailResponse;

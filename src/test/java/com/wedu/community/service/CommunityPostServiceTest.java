@@ -14,12 +14,12 @@ import com.wedu.community.domain.CommunityPostSort;
 import com.wedu.community.domain.PostTheme;
 import com.wedu.community.dto.CommunityPostCreateRequest;
 import com.wedu.community.dto.CommunityPostUpdateRequest;
-import com.wedu.community.repository.CommunityCommentRepository;
 import com.wedu.community.repository.CommunityCommentCountProjection;
-import com.wedu.community.repository.CommunityPostRepository;
+import com.wedu.community.repository.CommunityCommentLikeRepository;
+import com.wedu.community.repository.CommunityCommentRepository;
 import com.wedu.community.repository.CommunityPostLikeCountProjection;
 import com.wedu.community.repository.CommunityPostLikeRepository;
-import com.wedu.community.repository.CommunityCommentLikeRepository;
+import com.wedu.community.repository.CommunityPostRepository;
 import com.wedu.global.error.BusinessException;
 import com.wedu.global.error.ErrorCode;
 import com.wedu.user.dto.UserPublicProfileResponse;
@@ -166,6 +166,7 @@ class CommunityPostServiceTest {
         CommunityPost post = CommunityPost.create(
                 1L, "제목", "본문", PostTheme.PROPOSAL, false);
         when(communityPostRepository.findById(10L)).thenReturn(Optional.of(post));
+        when(communityPostRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(post));
         when(userService.getPublicProfile(1L))
                 .thenReturn(new UserPublicProfileResponse(1L, "작성자", null));
 
@@ -180,6 +181,7 @@ class CommunityPostServiceTest {
         verify(commentLikeRepository).deleteByPostId(10L);
         verify(communityCommentRepository).deleteByPostId(10L);
         verify(postLikeRepository).deleteByPostId(10L);
+        verify(communityPostRepository).findByIdForUpdate(10L);
         verify(communityPostRepository).delete(post);
     }
 
@@ -189,12 +191,17 @@ class CommunityPostServiceTest {
         CommunityPost post = CommunityPost.create(
                 2L, "제목", "본문", PostTheme.PROPOSAL, false);
         when(communityPostRepository.findById(10L)).thenReturn(Optional.of(post));
+        when(communityPostRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(post));
 
         assertThatThrownBy(() -> communityPostService.update(
                         1L,
                         10L,
                         new CommunityPostUpdateRequest(
                                 "수정", "본문", PostTheme.PROPOSAL, false)))
+                .isInstanceOf(BusinessException.class)
+                .extracting(exception -> ((BusinessException) exception).getErrorCode())
+                .isEqualTo(ErrorCode.COMMUNITY_POST_FORBIDDEN);
+        assertThatThrownBy(() -> communityPostService.delete(1L, 10L))
                 .isInstanceOf(BusinessException.class)
                 .extracting(exception -> ((BusinessException) exception).getErrorCode())
                 .isEqualTo(ErrorCode.COMMUNITY_POST_FORBIDDEN);

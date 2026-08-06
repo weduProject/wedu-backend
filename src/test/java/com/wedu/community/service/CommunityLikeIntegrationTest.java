@@ -21,6 +21,13 @@ import com.wedu.user.domain.SocialProvider;
 import com.wedu.user.domain.User;
 import com.wedu.user.repository.UserRepository;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -41,12 +48,14 @@ class CommunityLikeIntegrationTest {
     @Autowired private CommunityPostLikeRepository postLikeRepository;
     @Autowired private CommunityCommentLikeRepository commentLikeRepository;
     @Autowired private UserRepository userRepository;
+    @Autowired private CommunityLikeService likeService;
 
     private Long authorId;
     private Long viewerId;
     private Long otherUserId;
     private CommunityPost post;
     private CommunityComment comment;
+    private ExecutorService executor;
 
     @BeforeEach
     void setUp() {
@@ -62,6 +71,13 @@ class CommunityLikeIntegrationTest {
                 authorId, "첫 게시글", "첫 본문", PostTheme.PROPOSAL, false));
         comment = commentRepository.save(
                 CommunityComment.createComment(post.getId(), authorId, "첫 댓글", false));
+        executor = Executors.newFixedThreadPool(2);
+    }
+
+    @AfterEach
+    void tearDown() throws InterruptedException {
+        executor.shutdownNow();
+        executor.awaitTermination(5, TimeUnit.SECONDS);
     }
 
     @Test
@@ -152,6 +168,44 @@ class CommunityLikeIntegrationTest {
     void requireAuthentication() throws Exception {
         mockMvc.perform(post("/api/community/posts/{postId}/likes", post.getId()).with(csrf()))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("같은 사용자가 게시글에 동시에 좋아요해도 하나만 저장한다")
+    void likePostConcurrently() throws Exception {
+        CyclicBarrier barrier = new CyclicBarrier(2);
+        Callable<Long> like = () -> {
+            barrier.await(5, TimeUnit.SECONDS);
+            return likeService.likePost(viewerId, post.getId()).likeCount();
+        };
+
+        Future<Long> first = executor.submit(like);
+        Future<Long> second = executor.submit(like);
+
+        assertThat(List.of(
+                        first.get(10, TimeUnit.SECONDS),
+                        second.get(10, TimeUnit.SECONDS)))
+                .containsOnly(1L);
+        assertThat(postLikeRepository.countByPostId(post.getId())).isEqualTo(1L);
+    }
+
+    @Test
+    @DisplayName("같은 사용자가 댓글에 동시에 좋아요해도 하나만 저장한다")
+    void likeCommentConcurrently() throws Exception {
+        CyclicBarrier barrier = new CyclicBarrier(2);
+        Callable<Long> like = () -> {
+            barrier.await(5, TimeUnit.SECONDS);
+            return likeService.likeComment(viewerId, comment.getId()).likeCount();
+        };
+
+        Future<Long> first = executor.submit(like);
+        Future<Long> second = executor.submit(like);
+
+        assertThat(List.of(
+                        first.get(10, TimeUnit.SECONDS),
+                        second.get(10, TimeUnit.SECONDS)))
+                .containsOnly(1L);
+        assertThat(commentLikeRepository.countByCommentId(comment.getId())).isEqualTo(1L);
     }
 
     private void likePost(Long postId, Long userId, int expectedCount) throws Exception {

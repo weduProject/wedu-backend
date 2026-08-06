@@ -42,7 +42,7 @@ public class CommunityPostController {
         return ApiResponse.ok(communityPostService.create(userId, request));
     }
 
-    /** 테마와 키워드로 최신 게시글 목록을 조회한다. */
+    /** 테마·키워드와 정렬 기준으로 게시글 목록을 조회한다. */
     @Operation(summary = "커뮤니티 게시글 목록 조회", description = "제목과 본문을 부분 일치 검색한다.")
     @GetMapping
     public ApiResponse<CommunityPostPageResponse> search(

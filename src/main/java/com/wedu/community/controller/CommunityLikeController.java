@@ -5,6 +5,7 @@ import com.wedu.community.service.CommunityLikeService;
 import com.wedu.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -26,7 +27,7 @@ public class CommunityLikeController {
     @PostMapping("/posts/{postId}/likes")
     public ApiResponse<CommunityLikeResponse> likePost(
             @AuthenticationPrincipal Long userId,
-            @PathVariable Long postId) {
+            @PathVariable @Positive Long postId) {
         return ApiResponse.ok(likeService.likePost(userId, postId));
     }
 
@@ -34,7 +35,7 @@ public class CommunityLikeController {
     @DeleteMapping("/posts/{postId}/likes")
     public ApiResponse<CommunityLikeResponse> unlikePost(
             @AuthenticationPrincipal Long userId,
-            @PathVariable Long postId) {
+            @PathVariable @Positive Long postId) {
         return ApiResponse.ok(likeService.unlikePost(userId, postId));
     }
 
@@ -42,7 +43,7 @@ public class CommunityLikeController {
     @PostMapping("/comments/{commentId}/likes")
     public ApiResponse<CommunityLikeResponse> likeComment(
             @AuthenticationPrincipal Long userId,
-            @PathVariable Long commentId) {
+            @PathVariable @Positive Long commentId) {
         return ApiResponse.ok(likeService.likeComment(userId, commentId));
     }
 
@@ -50,7 +51,7 @@ public class CommunityLikeController {
     @DeleteMapping("/comments/{commentId}/likes")
     public ApiResponse<CommunityLikeResponse> unlikeComment(
             @AuthenticationPrincipal Long userId,
-            @PathVariable Long commentId) {
+            @PathVariable @Positive Long commentId) {
         return ApiResponse.ok(likeService.unlikeComment(userId, commentId));
     }
 }

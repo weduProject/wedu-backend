@@ -16,7 +16,7 @@ import org.springframework.data.repository.query.Param;
 /** 커뮤니티 댓글 저장, 조회, 집계를 담당한다. */
 public interface CommunityCommentRepository extends JpaRepository<CommunityComment, Long> {
 
-    /** 좋아요 변경 중 같은 댓글에 대한 중복 등록 경쟁을 직렬화한다. */
+    /** 좋아요 변경과 댓글 삭제가 같은 댓글에서 일관된 순서로 실행되도록 잠근다. */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT c FROM CommunityComment c WHERE c.id = :commentId")
     Optional<CommunityComment> findByIdForUpdate(@Param("commentId") Long commentId);

@@ -152,7 +152,7 @@ public class CommunityCommentService {
     @Transactional
     public void delete(Long userId, Long commentId) {
         validateUserId(userId);
-        CommunityComment comment = findOwnedComment(userId, commentId);
+        CommunityComment comment = findOwnedCommentForUpdate(userId, commentId);
         commentLikeRepository.deleteByCommentIdAndReplies(comment.getId());
         if (!comment.isReply()) {
             commentRepository.deleteByParentId(comment.getId());
@@ -228,6 +228,16 @@ public class CommunityCommentService {
 
     private CommunityComment findOwnedComment(Long userId, Long commentId) {
         CommunityComment comment = findComment(commentId);
+        if (!comment.isOwnedBy(userId)) {
+            throw new BusinessException(ErrorCode.COMMUNITY_COMMENT_FORBIDDEN);
+        }
+        return comment;
+    }
+
+    private CommunityComment findOwnedCommentForUpdate(Long userId, Long commentId) {
+        validatePositiveId(commentId, "댓글 식별자");
+        CommunityComment comment = commentRepository.findByIdForUpdate(commentId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.COMMUNITY_COMMENT_NOT_FOUND));
         if (!comment.isOwnedBy(userId)) {
             throw new BusinessException(ErrorCode.COMMUNITY_COMMENT_FORBIDDEN);
         }

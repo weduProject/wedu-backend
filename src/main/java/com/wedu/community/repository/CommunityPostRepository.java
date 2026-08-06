@@ -14,7 +14,7 @@ import org.springframework.data.repository.query.Param;
 /** 커뮤니티 게시글 저장과 검색을 담당한다. */
 public interface CommunityPostRepository extends JpaRepository<CommunityPost, Long> {
 
-    /** 좋아요 변경 중 같은 게시글에 대한 중복 등록 경쟁을 직렬화한다. */
+    /** 좋아요 변경과 게시글 삭제가 같은 게시글에서 일관된 순서로 실행되도록 잠근다. */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT p FROM CommunityPost p WHERE p.id = :postId")
     Optional<CommunityPost> findByIdForUpdate(@Param("postId") Long postId);
