@@ -21,7 +21,7 @@ import com.wedu.community.dto.CommunityPostPageResponse;
 import com.wedu.community.dto.CommunityPostSummaryResponse;
 import com.wedu.community.dto.CommunityPostUpdateRequest;
 import com.wedu.community.service.CommunityPostService;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -171,7 +171,7 @@ class CommunityPostControllerTest {
                 true,
                 0,
                 0,
-                LocalDateTime.of(2026, 8, 5, 1, 0));
+                OffsetDateTime.parse("2026-08-05T01:00:00Z"));
     }
 
     private CommunityPostDetailResponse detail() {

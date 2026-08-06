@@ -21,7 +21,7 @@ import com.wedu.community.dto.CommunityCommentUpdateRequest;
 import com.wedu.community.dto.CommunityCommentAuthorResponse;
 import com.wedu.community.dto.CommunityReplyPageResponse;
 import com.wedu.community.service.CommunityCommentService;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -119,7 +119,7 @@ class CommunityCommentControllerTest {
     }
 
     private CommunityCommentResponse response(Long parentId) {
-        LocalDateTime now = LocalDateTime.of(2026, 8, 5, 1, 0);
+        OffsetDateTime now = OffsetDateTime.parse("2026-08-05T01:00:00Z");
         return new CommunityCommentResponse(
                 30L,
                 10L,

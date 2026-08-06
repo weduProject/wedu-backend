@@ -1,6 +1,7 @@
 package com.wedu.community.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.endsWith;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -19,6 +20,8 @@ import com.wedu.user.domain.Nickname;
 import com.wedu.user.domain.SocialProvider;
 import com.wedu.user.domain.User;
 import com.wedu.user.repository.UserRepository;
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -39,6 +42,7 @@ class CommunityCommentIntegrationTest {
     @Autowired private CommunityCommentRepository commentRepository;
     @Autowired private CommunityPostRepository postRepository;
     @Autowired private UserRepository userRepository;
+    @Autowired private Clock clock;
 
     private Long authorId;
     private Long commenterId;
@@ -64,9 +68,12 @@ class CommunityCommentIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"content\":\"첫 댓글\",\"anonymous\":false}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.author.nickname").value("댓글러"));
+                .andExpect(jsonPath("$.data.author.nickname").value("댓글러"))
+                .andExpect(jsonPath("$.data.createdAt", endsWith("Z")));
 
         CommunityComment parent = commentRepository.findAll().getFirst();
+        LocalDateTime now = LocalDateTime.now(clock);
+        assertThat(parent.getCreatedAt()).isBetween(now.minusSeconds(5), now.plusSeconds(5));
         mockMvc.perform(post(
                                 "/api/community/posts/{postId}/comments/{commentId}/replies",
                                 postId,
