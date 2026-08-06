@@ -18,4 +18,5 @@ mysql -h <host> -u <user> -p <database> < scripts/migrations/V011__create_commun
 mysql -h <host> -u <user> -p <database> < scripts/migrations/V012__create_friendships.sql
 mysql -h <host> -u <user> -p <database> < scripts/migrations/V013__create_share_links.sql
 mysql -h <host> -u <user> -p <database> < scripts/migrations/V014__create_community_comments.sql
+mysql -h <host> -u <user> -p <database> < scripts/migrations/V015__create_community_likes.sql
 ```

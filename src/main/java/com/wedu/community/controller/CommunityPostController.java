@@ -1,5 +1,6 @@
 package com.wedu.community.controller;
 
+import com.wedu.community.domain.CommunityPostSort;
 import com.wedu.community.domain.PostTheme;
 import com.wedu.community.dto.CommunityPostCreateRequest;
 import com.wedu.community.dto.CommunityPostDetailResponse;
@@ -50,11 +51,14 @@ public class CommunityPostController {
             @RequestParam(required = false) PostTheme theme,
             @Parameter(description = "제목·본문 검색어")
             @RequestParam(required = false) String keyword,
+            @Parameter(description = "정렬 기준(LATEST: 최신순, MOST_LIKED: 좋아요순)")
+            @RequestParam(defaultValue = "LATEST") CommunityPostSort sort,
             @Parameter(description = "0부터 시작하는 페이지 번호", example = "0")
             @RequestParam(defaultValue = "0") Integer page,
             @Parameter(description = "페이지 크기(1~50)", example = "20")
             @RequestParam(defaultValue = "20") Integer size) {
-        return ApiResponse.ok(communityPostService.search(userId, theme, keyword, page, size));
+        return ApiResponse.ok(
+                communityPostService.search(userId, theme, keyword, sort, page, size));
     }
 
     /** 커뮤니티 게시글 상세를 조회한다. */

@@ -14,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.wedu.community.domain.PostTheme;
+import com.wedu.community.domain.CommunityPostSort;
 import com.wedu.community.dto.CommunityPostAuthorResponse;
 import com.wedu.community.dto.CommunityPostCreateRequest;
 import com.wedu.community.dto.CommunityPostDetailResponse;
@@ -106,7 +107,12 @@ class CommunityPostControllerTest {
     @DisplayName("테마와 키워드로 게시글 목록을 조회한다")
     void search() throws Exception {
         when(communityPostService.search(
-                        1L, PostTheme.WEDDING_PREPARATION, "예식장", 0, 20))
+                        1L,
+                        PostTheme.WEDDING_PREPARATION,
+                        "예식장",
+                        CommunityPostSort.LATEST,
+                        0,
+                        20))
                 .thenReturn(new CommunityPostPageResponse(
                         List.of(summary()), 0, 20, 1, 1, false));
 
@@ -172,6 +178,7 @@ class CommunityPostControllerTest {
                 new CommunityPostAuthorResponse(1L, "예비신랑", null),
                 true,
                 0,
+                false,
                 0,
                 OffsetDateTime.parse("2026-08-05T01:00:00Z"));
     }
@@ -181,6 +188,6 @@ class CommunityPostControllerTest {
         return new CommunityPostDetailResponse(
                 summary.postId(), summary.title(), summary.content(), summary.theme(),
                 summary.anonymous(), summary.author(), summary.isMine(), summary.likeCount(),
-                summary.commentCount(), summary.createdAt(), summary.createdAt());
+                summary.likedByMe(), summary.commentCount(), summary.createdAt(), summary.createdAt());
     }
 }

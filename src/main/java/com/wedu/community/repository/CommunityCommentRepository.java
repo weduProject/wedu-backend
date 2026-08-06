@@ -1,17 +1,25 @@
 package com.wedu.community.repository;
 
 import com.wedu.community.domain.CommunityComment;
+import jakarta.persistence.LockModeType;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 /** 커뮤니티 댓글 저장, 조회, 집계를 담당한다. */
 public interface CommunityCommentRepository extends JpaRepository<CommunityComment, Long> {
+
+    /** 좋아요 변경 중 같은 댓글에 대한 중복 등록 경쟁을 직렬화한다. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT c FROM CommunityComment c WHERE c.id = :commentId")
+    Optional<CommunityComment> findByIdForUpdate(@Param("commentId") Long commentId);
 
     Page<CommunityComment> findByPostIdAndParentIdIsNullOrderByCreatedAtAscIdAsc(
             Long postId, Pageable pageable);

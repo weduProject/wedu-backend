@@ -129,6 +129,8 @@ class CommunityCommentControllerTest {
                 new CommunityCommentAuthorResponse(1L, "작성자", null),
                 true,
                 true,
+                0,
+                false,
                 now,
                 now);
     }
@@ -143,6 +145,8 @@ class CommunityCommentControllerTest {
                 response.author(),
                 response.isMine(),
                 response.isPostAuthor(),
+                response.likeCount(),
+                response.likedByMe(),
                 0,
                 response.createdAt(),
                 response.updatedAt());

@@ -17,6 +17,8 @@ public record CommunityCommentResponse(
         CommunityCommentAuthorResponse author,
         boolean isMine,
         @Schema(description = "게시글 작성자가 작성한 댓글인지 여부") boolean isPostAuthor,
+        @Schema(description = "댓글 또는 답글 좋아요 수") long likeCount,
+        @Schema(description = "현재 사용자의 좋아요 여부") boolean likedByMe,
         @Schema(description = "UTC 기준 작성 시각", example = "2026-08-06T01:00:00Z") OffsetDateTime createdAt,
         @Schema(description = "UTC 기준 수정 시각", example = "2026-08-06T01:00:00Z") OffsetDateTime updatedAt) {
 
@@ -25,7 +27,9 @@ public record CommunityCommentResponse(
             CommunityComment comment,
             Long viewerId,
             Long postAuthorId,
-            UserPublicProfileResponse profile) {
+            UserPublicProfileResponse profile,
+            long likeCount,
+            boolean likedByMe) {
         return new CommunityCommentResponse(
                 comment.getId(),
                 comment.getPostId(),
@@ -37,6 +41,8 @@ public record CommunityCommentResponse(
                         : CommunityCommentAuthorResponse.from(profile),
                 comment.isOwnedBy(viewerId),
                 comment.getAuthorId().equals(postAuthorId),
+                likeCount,
+                likedByMe,
                 toUtc(comment.getCreatedAt()),
                 toUtc(comment.getUpdatedAt()));
     }

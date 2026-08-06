@@ -16,6 +16,7 @@ import com.wedu.community.domain.PostTheme;
 import com.wedu.community.dto.CommunityCommentCreateRequest;
 import com.wedu.community.dto.CommunityCommentUpdateRequest;
 import com.wedu.community.repository.CommunityCommentRepository;
+import com.wedu.community.repository.CommunityCommentLikeRepository;
 import com.wedu.community.repository.CommunityPostRepository;
 import com.wedu.community.repository.CommunityReplyCountProjection;
 import com.wedu.global.error.BusinessException;
@@ -42,6 +43,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 class CommunityCommentServiceTest {
 
     @Mock private CommunityCommentRepository commentRepository;
+    @Mock private CommunityCommentLikeRepository commentLikeRepository;
     @Mock private CommunityPostRepository postRepository;
     @Mock private UserService userService;
 
@@ -49,7 +51,8 @@ class CommunityCommentServiceTest {
 
     @BeforeEach
     void setUp() {
-        commentService = new CommunityCommentService(commentRepository, postRepository, userService);
+        commentService = new CommunityCommentService(
+                commentRepository, commentLikeRepository, postRepository, userService);
     }
 
     @Test
@@ -253,6 +256,7 @@ class CommunityCommentServiceTest {
 
         commentService.delete(1L, 20L);
 
+        verify(commentLikeRepository).deleteByCommentIdAndReplies(20L);
         verify(commentRepository).deleteByParentId(20L);
         verify(commentRepository).delete(comment);
     }
