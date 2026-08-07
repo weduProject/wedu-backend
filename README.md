@@ -77,6 +77,23 @@ export JPA_DDL_AUTO="update"
 ### API 문서
 서버 실행 후 Swagger UI: `http://localhost:8080/swagger-ui.html`
 
+### 소셜 로그인 (프론트 콜백)
+
+로그인 시작 URL에 `redirect_uri`를 넘기면, `wedu.cors.allowed-origins` 기반 allowlist에 있을 때만
+그 주소로 콜백한다. 없거나 불허면 `OAUTH_FRONTEND_REDIRECT_URI`(`wedu.oauth2.frontend-redirect-uri`)를 쓴다.
+
+```text
+# 로컬 프론트 → (필요 시 운영) API
+/oauth2/authorization/kakao?redirect_uri=http://localhost:5173/auth/callback
+/oauth2/authorization/google?redirect_uri=http://localhost:5173/auth/callback
+
+# 운영 프론트: 파라미터 생략 가능 (기본 콜백 사용)
+/oauth2/authorization/kakao
+```
+
+origin만 넘기면(`/auth/callback` 없이) 서버가 `/auth/callback`을 붙인다.
+쿼리·프래그먼트가 있거나 allowlist 밖이면 기본값으로 fallback한다.
+
 ---
 
 ## 브랜치 & 커밋 규칙

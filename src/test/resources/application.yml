@@ -44,6 +44,8 @@ jwt:
 wedu:
   oauth2:
     frontend-redirect-uri: http://localhost:3000/auth/callback
+  cors:
+    allowed-origins: http://localhost:3000,http://localhost:5173,https://wedu.io.kr,https://www.wedu.io.kr
 
 logging:
   level:
