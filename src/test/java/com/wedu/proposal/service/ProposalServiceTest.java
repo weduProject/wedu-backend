@@ -62,7 +62,7 @@ class ProposalServiceTest {
         when(productService.getDetail(20L))
                 .thenReturn(new ProductDetailResponse(20L, "스냅 촬영", null, 300_000, "업체", null, null));
         when(proposalRepository.findByUserId(1L)).thenReturn(Optional.of(proposal));
-        ProposalOptionRequest request = new ProposalOptionRequest(ProposalItemCategory.STUDIO, 20L);
+        ProposalOptionRequest request = new ProposalOptionRequest(ProposalItemCategory.PHOTO, 20L);
 
         ProposalResponse response = proposalService.selectOption(1L, request);
 
