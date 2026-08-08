@@ -22,6 +22,8 @@ if [ ! -f "$BASE_ENV_FILE" ]; then
   exit 1
 fi
 
+echo "DB 연결 정보(호스트만, 자격증명 제외): $(grep -E '^DB_URL=' "$BASE_ENV_FILE" | cut -d= -f2-)"
+
 echo "systemd 서비스 설정 갱신"
 sudo tee "/etc/systemd/system/$SERVICE_NAME.service" > /dev/null <<EOF
 [Unit]
