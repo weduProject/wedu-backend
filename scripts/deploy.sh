@@ -23,6 +23,11 @@ if [ ! -f "$BASE_ENV_FILE" ]; then
 fi
 
 echo "DB 연결 정보(호스트만, 자격증명 제외): $(grep -E '^DB_URL=' "$BASE_ENV_FILE" | cut -d= -f2-)"
+echo "wedu.env 에 정의된 키 목록(값 제외): $(grep -oE '^[A-Z_]+=' "$BASE_ENV_FILE" | tr -d '=' | tr '\n' ' ')"
+echo "로컬 3306 포트 리스닝 여부:"
+(sudo ss -tlnp 2>/dev/null | grep ':3306' ) || echo "  (3306 리스닝 없음 — 로컬 MySQL 아님)"
+echo "로컬 mysql/mariadb 서비스 상태:"
+(systemctl is-active mysql 2>/dev/null; systemctl is-active mariadb 2>/dev/null; systemctl is-active mysqld 2>/dev/null) || true
 
 echo "systemd 서비스 설정 갱신"
 sudo tee "/etc/systemd/system/$SERVICE_NAME.service" > /dev/null <<EOF
