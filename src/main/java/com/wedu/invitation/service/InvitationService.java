@@ -20,7 +20,16 @@ public class InvitationService {
 
     /** 새 청첩장을 생성한다. */
     @Transactional
-    public InvitationResponse create(Long userId, InvitationCreateRequest request) {
+    public InvitationResponse create(
+            Long userId,
+            InvitationCreateRequest request) {
+
+        if (invitationRepository.existsByUserId(userId)) {
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT,
+                    "이미 생성된 청첩장이 있습니다."
+            );
+        }
 
         Invitation invitation = Invitation.create(
                 userId,
@@ -64,7 +73,8 @@ public class InvitationService {
 
                 request.mainColor(),
                 request.fontFamily(),
-                request.bgmUrl()
+                request.bgmUrl(),
+                request.designSettings()
         );
 
         Invitation saved = invitationRepository.save(invitation);
@@ -140,7 +150,8 @@ public class InvitationService {
 
                 request.mainColor(),
                 request.fontFamily(),
-                request.bgmUrl()
+                request.bgmUrl(),
+                request.designSettings()
         );
 
         return InvitationResponse.from(invitation);

@@ -52,6 +52,7 @@ public record InvitationUpdateRequest(
         // 디자인
         String mainColor,
         String fontFamily,
-        String bgmUrl
+        String bgmUrl,
+        String designSettings
 ) {
 }

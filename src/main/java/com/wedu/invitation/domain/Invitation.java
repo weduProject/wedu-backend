@@ -143,6 +143,9 @@ public class Invitation extends BaseTimeEntity {
     @Column(name = "bgm_url", columnDefinition = "TEXT")
     private String bgmUrl;
 
+    @Column(name = "design_settings", columnDefinition = "TEXT")
+    private String designSettings;
+
     private Invitation(
             Long userId,
             String templateId,
@@ -179,6 +182,7 @@ public class Invitation extends BaseTimeEntity {
             String mainColor,
             String fontFamily,
             String bgmUrl,
+            String designSettings,
             InvitationStatus status) {
 
         this.userId = userId;
@@ -223,11 +227,14 @@ public class Invitation extends BaseTimeEntity {
         this.mainColor = mainColor;
         this.fontFamily = fontFamily;
         this.bgmUrl = bgmUrl;
+        this.designSettings = designSettings;
 
         this.status = status;
     }
 
-    /** 새 청첩장을 생성한다. */
+    /**
+     * 새 청첩장을 생성한다.
+     */
     public static Invitation create(
             Long userId,
             String templateId,
@@ -263,7 +270,8 @@ public class Invitation extends BaseTimeEntity {
             String publicTransportGuide,
             String mainColor,
             String fontFamily,
-            String bgmUrl) {
+            String bgmUrl,
+            String designSettings) {
 
         validateUserId(userId);
         validateTemplateId(templateId);
@@ -305,6 +313,7 @@ public class Invitation extends BaseTimeEntity {
                 mainColor,
                 fontFamily,
                 bgmUrl,
+                designSettings,
                 InvitationStatus.DRAFT
         );
     }
@@ -344,7 +353,8 @@ public class Invitation extends BaseTimeEntity {
             String publicTransportGuide,
             String mainColor,
             String fontFamily,
-            String bgmUrl) {
+            String bgmUrl,
+            String designSettings) {
 
         validateTemplateId(templateId);
         validateTitle(title);
@@ -390,6 +400,7 @@ public class Invitation extends BaseTimeEntity {
         this.mainColor = mainColor;
         this.fontFamily = fontFamily;
         this.bgmUrl = bgmUrl;
+        this.designSettings = designSettings;
     }
 
     /** 청첩장을 발행 상태로 변경한다. */

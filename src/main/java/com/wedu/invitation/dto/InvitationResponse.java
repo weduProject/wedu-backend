@@ -55,7 +55,8 @@ public record InvitationResponse(
         // 디자인 설정
         String mainColor,
         String fontFamily,
-        String bgmUrl
+        String bgmUrl,
+        String designSettings
 ) {
 
     public static InvitationResponse from(Invitation invitation) {
@@ -103,7 +104,8 @@ public record InvitationResponse(
 
                 invitation.getMainColor(),
                 invitation.getFontFamily(),
-                invitation.getBgmUrl()
+                invitation.getBgmUrl(),
+                invitation.getDesignSettings()
         );
     }
 }
