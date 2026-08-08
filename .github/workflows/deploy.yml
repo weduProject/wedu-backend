@@ -55,15 +55,16 @@ jobs:
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: CORS_ALLOWED_ORIGINS,OAUTH_FRONTEND_REDIRECT_URI,KAKAO_CLIENT_ID,KAKAO_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,JWT_SECRET
+          envs: CORS_ALLOWED_ORIGINS,OAUTH_FRONTEND_REDIRECT_URI,KAKAO_CLIENT_ID,KAKAO_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,JWT_SECRET,DISCORD_WEBHOOK_URL
           script: |
             set -e
 
-            for name in KAKAO_CLIENT_ID KAKAO_CLIENT_SECRET GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET JWT_SECRET OAUTH_FRONTEND_REDIRECT_URI CORS_ALLOWED_ORIGINS; do
+            for name in KAKAO_CLIENT_ID KAKAO_CLIENT_SECRET GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET JWT_SECRET OAUTH_FRONTEND_REDIRECT_URI CORS_ALLOWED_ORIGINS DISCORD_WEBHOOK_URL; do
               if [ -z "$(printenv "$name")" ]; then
                 echo "GitHub secret is missing: $name"
                 exit 1
@@ -79,6 +80,7 @@ jobs:
               printf '%s\n' "JWT_SECRET=$JWT_SECRET"
               printf '%s\n' "OAUTH_FRONTEND_REDIRECT_URI=$OAUTH_FRONTEND_REDIRECT_URI"
               printf '%s\n' "CORS_ALLOWED_ORIGINS=$CORS_ALLOWED_ORIGINS"
+              printf '%s\n' "DISCORD_WEBHOOK_URL=$DISCORD_WEBHOOK_URL"
               printf '%s\n' "SERVER_FORWARD_HEADERS_STRATEGY=framework"
             } | sudo tee /etc/wedu/wedu-github.env > /dev/null
             sudo chmod 600 /etc/wedu/wedu-github.env
