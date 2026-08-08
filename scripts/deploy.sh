@@ -68,10 +68,11 @@ $LOG_FILE {
 EOF
 
 echo "DB 일일 백업 스케줄 등록"
-sudo mkdir -p /var/backups/wedu
+sudo install -d -m 700 -o root -g root /var/backups/wedu
 sudo tee /usr/local/bin/wedu-db-backup.sh > /dev/null <<'BACKUP_EOF'
 #!/bin/bash
-set -e
+set -euo pipefail
+umask 077
 BASE_ENV_FILE="/etc/wedu/wedu.env"
 BACKUP_DIR="/var/backups/wedu"
 RETENTION_DAYS=7
@@ -84,8 +85,12 @@ DB_NAME=$(echo "$DB_URL" | sed -E 's#.*/([A-Za-z0-9_]+)(\?.*)?$#\1#')
 
 TIMESTAMP=$(date +%Y%m%d)
 OUTPUT_FILE="$BACKUP_DIR/wedu-$TIMESTAMP.sql.gz"
+TEMP_OUTPUT=$(mktemp "$BACKUP_DIR/.wedu-$TIMESTAMP.XXXXXX.sql.gz")
+trap 'rm -f "$TEMP_OUTPUT"' EXIT
 
-MYSQL_PWD="$DB_PASSWORD" mysqldump -h "$DB_HOST" -u "$DB_USERNAME" "$DB_NAME" | gzip > "$OUTPUT_FILE"
+MYSQL_PWD="$DB_PASSWORD" mysqldump -h "$DB_HOST" -u "$DB_USERNAME" "$DB_NAME" | gzip > "$TEMP_OUTPUT"
+mv "$TEMP_OUTPUT" "$OUTPUT_FILE"
+trap - EXIT
 
 find "$BACKUP_DIR" -name 'wedu-*.sql.gz' -mtime "+$RETENTION_DAYS" -delete
 BACKUP_EOF
@@ -113,11 +118,12 @@ fi
 if [ -f "$STATE_FILE" ]; then
   exit 0
 fi
-touch "$STATE_FILE"
 
 if [ -n "$DISCORD_WEBHOOK_URL" ]; then
   PAYLOAD='{"embeds":[{"title":"🚨 wedu-backend 헬스체크 실패","description":"/actuator/health 응답 없음 또는 UP 아님","color":15158332}]}'
-  curl -sf -X POST "$DISCORD_WEBHOOK_URL" -H "Content-Type: application/json" -d "$PAYLOAD" || true
+  if curl -sf -X POST "$DISCORD_WEBHOOK_URL" -H "Content-Type: application/json" -d "$PAYLOAD"; then
+    touch "$STATE_FILE"
+  fi
 fi
 HEALTH_EOF
 sudo chmod 700 /usr/local/bin/wedu-health-alert.sh
