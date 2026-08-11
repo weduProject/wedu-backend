@@ -3,6 +3,7 @@ package com.wedu.global.security.oauth;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -37,8 +38,19 @@ class OAuthLoginCodeStoreTest {
 
     @BeforeEach
     void setUp() {
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         store = new OAuthLoginCodeStore(redisTemplate, objectMapper, TTL_SECONDS);
+    }
+
+    @Test
+    @DisplayName("TTL 이 0 이하면 생성에 실패한다")
+    void rejectNonPositiveTtl() {
+        assertThatThrownBy(() -> new OAuthLoginCodeStore(redisTemplate, objectMapper, 0))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("must be positive");
+        assertThatThrownBy(() -> new OAuthLoginCodeStore(redisTemplate, objectMapper, -1))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("must be positive");
     }
 
     @Test

@@ -30,6 +30,10 @@ public class OAuthLoginCodeStore {
             StringRedisTemplate redisTemplate,
             ObjectMapper objectMapper,
             @Value("${wedu.oauth2.login-code-ttl-seconds:120}") long ttlSeconds) {
+        if (ttlSeconds <= 0) {
+            throw new IllegalArgumentException(
+                    "wedu.oauth2.login-code-ttl-seconds must be positive, but was " + ttlSeconds);
+        }
         this.redisTemplate = redisTemplate;
         this.objectMapper = objectMapper;
         this.ttl = Duration.ofSeconds(ttlSeconds);
