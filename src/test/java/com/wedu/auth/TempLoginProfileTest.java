@@ -49,7 +49,8 @@ class TempLoginDevProfileTest extends TempLoginProfileTest {
 @SpringBootTest(
         properties = {
             "CORS_ALLOWED_ORIGINS=https://frontend.example.com",
-            "REDIS_HOST=localhost"
+            "REDIS_HOST=localhost",
+            "PUBLIC_BASE_URL=https://api.example.com"
         })
 @ActiveProfiles("prod")
 class TempLoginProdProfileTest extends TempLoginProfileTest {
@@ -73,7 +74,8 @@ class TempLoginStagingProfileTest extends TempLoginProfileTest {
 @SpringBootTest(
         properties = {
             "CORS_ALLOWED_ORIGINS=https://frontend.example.com",
-            "REDIS_HOST=localhost"
+            "REDIS_HOST=localhost",
+            "PUBLIC_BASE_URL=https://api.example.com"
         })
 @ActiveProfiles({"prod", "dev"})
 class TempLoginProdDevProfileTest extends TempLoginProfileTest {

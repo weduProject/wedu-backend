@@ -23,6 +23,14 @@ class ProductThumbnailUrlsTest {
     }
 
     @Test
+    @DisplayName("스킴이 대문자여도 절대 URL로 보고 베이스 URL을 붙이지 않는다")
+    void keepAbsoluteUrlWithUppercaseScheme() {
+        assertThat(ProductThumbnailUrls.toPublicUrl(
+                        "HTTPS://cdn.example.com/a.jpg", "https://api.example.com"))
+                .isEqualTo("HTTPS://cdn.example.com/a.jpg");
+    }
+
+    @Test
     @DisplayName("비어 있으면 null을 반환한다")
     void blankBecomesNull() {
         assertThat(ProductThumbnailUrls.toPublicUrl(" ", "https://api.example.com")).isNull();

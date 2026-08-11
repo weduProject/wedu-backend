@@ -1,5 +1,7 @@
 package com.wedu.product.dto;
 
+import java.util.Locale;
+
 /** DB에 저장된 상대 경로 썸네일을 공개 URL로 만든다. */
 final class ProductThumbnailUrls {
 
@@ -10,7 +12,8 @@ final class ProductThumbnailUrls {
             return null;
         }
         String trimmed = thumbnailUrl.trim();
-        if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+        String scheme = trimmed.toLowerCase(Locale.ROOT);
+        if (scheme.startsWith("http://") || scheme.startsWith("https://")) {
             return trimmed;
         }
         String base = publicBaseUrl == null ? "" : publicBaseUrl.strip();
