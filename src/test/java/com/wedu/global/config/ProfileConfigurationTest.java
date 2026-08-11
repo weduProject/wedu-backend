@@ -8,7 +8,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.env.Environment;
 import org.springframework.test.context.ActiveProfiles;
 
-@SpringBootTest(properties = "CORS_ALLOWED_ORIGINS=https://frontend.example.com")
+@SpringBootTest(
+        properties = {
+            "CORS_ALLOWED_ORIGINS=https://frontend.example.com",
+            "REDIS_HOST=localhost"
+        })
 @ActiveProfiles("prod")
 class ProfileConfigurationTest {
 

@@ -14,7 +14,7 @@ WEDU는 심리테스트 기반 맞춤 추천으로 사용자에게 프로포즈 
 | 언어 | Java 21 |
 | 프레임워크 | Spring Boot 3.3.5 (Spring MVC) |
 | 빌드 | Gradle (wrapper 포함) |
-| 저장소 | MySQL + Spring Data JPA (테스트는 H2) |
+| 저장소 | MySQL + Spring Data JPA (테스트는 H2), Redis(OAuth 일회용 코드) |
 | 인증 | 소셜 로그인(OAuth2: Kakao/Naver/Google) + JWT |
 | API 문서 | springdoc-openapi (Swagger UI) |
 | 테스트 | JUnit 5, Mockito, AssertJ |
@@ -44,9 +44,10 @@ WEDU는 심리테스트 기반 맞춤 추천으로 사용자에게 프로포즈 
 ### 사전 준비
 - JDK 21
 - MySQL (로컬 실행 또는 접속 정보) — 없으면 아래 환경변수로 접속 정보를 주입한다.
+- Redis 6.2+ (OAuth 일회용 로그인 코드 저장, `GETDEL` 사용) — 로컬은 `docker compose up -d redis`
 
 ### 환경변수
-민감값(DB 비밀번호, OAuth client-secret, JWT secret)은 커밋하지 않는다. 환경변수 또는
+민감값(DB 비밀번호, OAuth client-secret, JWT secret, Redis 비밀번호)은 커밋하지 않는다. 환경변수 또는
 `application-secret.yml`(gitignore 처리됨)로 주입한다.
 
 ```bash
@@ -56,6 +57,14 @@ export DB_PASSWORD="****"
 export JWT_SECRET="256bit 이상 랜덤 문자열"
 # 로컬 첫 실행이라 스키마 자동 생성이 필요하면:
 export JPA_DDL_AUTO="update"
+
+# Redis (로컬 기본값: localhost:6379, 비밀번호 없음)
+export REDIS_HOST="localhost"
+export REDIS_PORT="6379"
+# export REDIS_PASSWORD="****"   # 필요할 때만
+# export OAUTH_LOGIN_CODE_TTL_SECONDS="120"  # 기본 120초
+
+# 운영(prod)에서는 REDIS_HOST 필수. CORS_ALLOWED_ORIGINS 와 함께 /etc/wedu/wedu.env 등에 둔다.
 ```
 
 ### 명령어

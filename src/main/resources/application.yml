@@ -6,6 +6,15 @@ spring:
   config:
     import: optional:classpath:application-secret.yml
 
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      # Lettuce 연결/명령 timeout (OAuth 코드 발급·교환이 Redis 지연에 장시간 묶이지 않도록)
+      connect-timeout: ${REDIS_CONNECT_TIMEOUT:2s}
+      timeout: ${REDIS_COMMAND_TIMEOUT:2s}
+
   datasource:
     url: ${DB_URL:jdbc:mysql://localhost:3306/wedu?serverTimezone=UTC&characterEncoding=UTF-8}
     username: ${DB_USERNAME:root}
@@ -61,6 +70,8 @@ jwt:
 wedu:
   oauth2:
     frontend-redirect-uri: ${OAUTH_FRONTEND_REDIRECT_URI:http://localhost:5173/auth/callback}
+    # 일회용 OAuth 로그인 코드 TTL(초). Redis 키 만료에 사용. Redis 6.2+ (GETDEL) 필요.
+    login-code-ttl-seconds: ${OAUTH_LOGIN_CODE_TTL_SECONDS:120}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000}
 
