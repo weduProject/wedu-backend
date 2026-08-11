@@ -14,7 +14,7 @@ WEDU는 심리테스트 기반 맞춤 추천으로 사용자에게 프로포즈 
 | 언어 | Java 21 |
 | 프레임워크 | Spring Boot 3.3.5 (Spring MVC) |
 | 빌드 | Gradle (wrapper 포함) |
-| 저장소 | MySQL + Spring Data JPA (테스트는 H2), Redis(OAuth 일회용 코드) |
+| 저장소 | MySQL + Spring Data JPA + Flyway (테스트는 H2), Redis(OAuth 일회용 코드) |
 | 인증 | 소셜 로그인(OAuth2: Kakao/Naver/Google) + JWT |
 | API 문서 | springdoc-openapi (Swagger UI) |
 | 테스트 | JUnit 5, Mockito, AssertJ |
@@ -45,6 +45,7 @@ WEDU는 심리테스트 기반 맞춤 추천으로 사용자에게 프로포즈 
 - JDK 21
 - MySQL (로컬 실행 또는 접속 정보) — 없으면 아래 환경변수로 접속 정보를 주입한다.
 - Redis 6.2+ (OAuth 일회용 로그인 코드 저장, `GETDEL` 사용) — 로컬은 `docker compose up -d redis`
+- 스키마는 Flyway가 기동 시 적용한다 (`src/main/resources/db/migration/`). 기존 운영 DB baseline은 [scripts/migrations/README.md](./scripts/migrations/README.md) 참고.
 
 ### 환경변수
 민감값(DB 비밀번호, OAuth client-secret, JWT secret, Redis 비밀번호)은 커밋하지 않는다. 환경변수 또는
@@ -55,8 +56,8 @@ export DB_URL="jdbc:mysql://localhost:3306/wedu?serverTimezone=UTC&characterEnco
 export DB_USERNAME="root"
 export DB_PASSWORD="****"
 export JWT_SECRET="256bit 이상 랜덤 문자열"
-# 로컬 첫 실행이라 스키마 자동 생성이 필요하면:
-export JPA_DDL_AUTO="update"
+# 스키마는 Flyway가 적용한다. JPA ddl-auto 기본값은 validate.
+# (로컬에서만 임시로 쓰려면 JPA_DDL_AUTO=update 가능, 가능하면 V00x SQL을 추가)
 
 # Redis (로컬 기본값: localhost:6379, 비밀번호 없음)
 export REDIS_HOST="localhost"

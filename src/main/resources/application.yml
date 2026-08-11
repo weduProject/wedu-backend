@@ -23,7 +23,8 @@ spring:
 
   jpa:
     hibernate:
-      # 운영/통합 환경은 validate 권장. 로컬 초기 개발은 환경변수로 update 로 덮어 쓴다.
+      # 스키마 변경은 Flyway 가 담당. JPA 는 검증만 한다.
+      # 로컬 초기 개발은 환경변수로 update 로 덮어 쓸 수 있으나, 가능하면 마이그레이션을 추가한다.
       ddl-auto: ${JPA_DDL_AUTO:validate}
     properties:
       hibernate:
@@ -31,6 +32,14 @@ spring:
         jdbc:
           time_zone: UTC
     open-in-view: false
+
+  # 스키마 마이그레이션. 빈 DB 는 V001 부터 적용.
+  # 이미 수동으로 V001~V016 이 있는 DB 는 이력 테이블이 없을 때 baseline(16) 후 V017+ 만 적용.
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 16
 
   # --- 소셜 로그인(OAuth2) ---
   # client-id/secret 은 환경변수 또는 application-secret.yml(gitignore) 로 주입한다.
