@@ -45,7 +45,7 @@ WEDU는 심리테스트 기반 맞춤 추천으로 사용자에게 프로포즈 
 - JDK 21
 - MySQL (로컬 실행 또는 접속 정보) — 없으면 아래 환경변수로 접속 정보를 주입한다.
 - Redis 6.2+ (OAuth 일회용 로그인 코드 저장, `GETDEL` 사용) — 로컬은 `docker compose up -d redis`
-- 스키마는 Flyway가 기동 시 적용한다 (`src/main/resources/db/migration/`). 기존 운영 DB baseline은 [scripts/migrations/README.md](./scripts/migrations/README.md) 참고.
+- 스키마는 Flyway가 기동 시 적용한다 (`src/main/resources/db/migration/`). 기존 운영 DB는 배포 전 1회 수동 baseline — [scripts/migrations/README.md](./scripts/migrations/README.md).
 
 ### 환경변수
 민감값(DB 비밀번호, OAuth client-secret, JWT secret, Redis 비밀번호)은 커밋하지 않는다. 환경변수 또는

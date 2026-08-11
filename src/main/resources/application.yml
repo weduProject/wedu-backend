@@ -34,12 +34,11 @@ spring:
     open-in-view: false
 
   # 스키마 마이그레이션. 빈 DB 는 V001 부터 적용.
-  # 이미 수동으로 V001~V016 이 있는 DB 는 이력 테이블이 없을 때 baseline(16) 후 V017+ 만 적용.
+  # 기존(수동 적용) DB 는 기동 전 1회 flyway baseline 을 수행한다. 절차는 scripts/migrations/README.md.
   flyway:
     enabled: true
     locations: classpath:db/migration
-    baseline-on-migrate: true
-    baseline-version: 16
+    baseline-on-migrate: false
 
   # --- 소셜 로그인(OAuth2) ---
   # client-id/secret 은 환경변수 또는 application-secret.yml(gitignore) 로 주입한다.
