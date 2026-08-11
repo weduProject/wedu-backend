@@ -45,6 +45,7 @@ jwt:
   access-token-validity-seconds: 3600
 
 wedu:
+  public-base-url: http://localhost:8080
   oauth2:
     frontend-redirect-uri: http://localhost:3000/auth/callback
     login-code-ttl-seconds: 120
