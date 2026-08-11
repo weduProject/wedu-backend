@@ -51,6 +51,7 @@ public class SecurityConfig {
         "/v3/api-docs/**",
         "/actuator/health",
         "/api/products/**",
+        "/products/**",
         "/api/ddays/shared/**",
         "/api/calendar-events/shared/**",
         "/api/checklist-items/shared/**",

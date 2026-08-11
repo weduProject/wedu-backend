@@ -33,7 +33,7 @@ class ProductServiceTest {
 
     @BeforeEach
     void setUp() {
-        productService = new ProductService(productRepository);
+        productService = new ProductService(productRepository, "http://localhost:8080");
     }
 
     @Test
@@ -61,6 +61,18 @@ class ProductServiceTest {
         List<ProductSummaryResponse> result = productService.search(null, "   ", null, null, pageable);
 
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    @DisplayName("상대 경로 썸네일은 공개 베이스 URL을 붙여 반환한다")
+    void resolveRelativeThumbnailUrl() {
+        Product product = Product.create(
+                "커플링", ProductCategory.RING, 100_000, "업체", "/products/1.jpg", "설명");
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+
+        var response = productService.getDetail(1L);
+
+        assertThat(response.thumbnailUrl()).isEqualTo("http://localhost:8080/products/1.jpg");
     }
 
     @Test

@@ -11,7 +11,8 @@ import org.springframework.test.context.ActiveProfiles;
 @SpringBootTest(
         properties = {
             "CORS_ALLOWED_ORIGINS=https://frontend.example.com",
-            "REDIS_HOST=localhost"
+            "REDIS_HOST=localhost",
+            "PUBLIC_BASE_URL=https://api.example.com"
         })
 @ActiveProfiles("prod")
 class ProfileConfigurationTest {
