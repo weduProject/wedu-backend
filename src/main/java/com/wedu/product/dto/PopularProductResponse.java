@@ -24,14 +24,17 @@ public record PopularProductResponse(
         long reviewCount) {
 
     public static PopularProductResponse from(
-            PopularProduct popularProduct, ProductCategory category, ProductRatingSummary rating) {
+            PopularProduct popularProduct,
+            String publicBaseUrl,
+            ProductCategory category,
+            ProductRatingSummary rating) {
         return new PopularProductResponse(
                 popularProduct.getId(),
                 popularProduct.getProductId(),
                 popularProduct.getName(),
                 popularProduct.getPrice(),
                 popularProduct.getSourceName(),
-                popularProduct.getThumbnailUrl(),
+                ProductThumbnailUrls.toPublicUrl(popularProduct.getThumbnailUrl(), publicBaseUrl),
                 popularProduct.getRank(),
                 category,
                 rating == null ? null : rating.rating(),

@@ -12,18 +12,29 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /** 인기 상품 조회 유스케이스를 처리한다. */
 @Service
-@RequiredArgsConstructor
 public class PopularProductService {
 
     private final PopularProductRepository popularProductRepository;
     private final ProductRepository productRepository;
     private final ProductRatingService productRatingService;
+    private final String publicBaseUrl;
+
+    public PopularProductService(
+            PopularProductRepository popularProductRepository,
+            ProductRepository productRepository,
+            ProductRatingService productRatingService,
+            @Value("${wedu.public-base-url:http://localhost:8080}") String publicBaseUrl) {
+        this.popularProductRepository = popularProductRepository;
+        this.productRepository = productRepository;
+        this.productRatingService = productRatingService;
+        this.publicBaseUrl = publicBaseUrl;
+    }
 
     /** 순위 오름차순으로 인기 상품 목록을 조회한다. */
     @Transactional(readOnly = true)
@@ -35,6 +46,7 @@ public class PopularProductService {
         return rankings.stream()
                 .map(ranking -> PopularProductResponse.from(
                         ranking,
+                        publicBaseUrl,
                         categories.get(ranking.getProductId()),
                         ratings.get(ranking.getProductId())))
                 .toList();
