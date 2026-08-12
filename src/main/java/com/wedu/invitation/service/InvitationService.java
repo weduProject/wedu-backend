@@ -8,6 +8,7 @@ import com.wedu.invitation.dto.InvitationResponse;
 import com.wedu.invitation.dto.InvitationUpdateRequest;
 import com.wedu.invitation.repository.InvitationRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -77,9 +78,16 @@ public class InvitationService {
                 request.designSettings()
         );
 
-        Invitation saved = invitationRepository.save(invitation);
+        try {
+            Invitation saved = invitationRepository.saveAndFlush(invitation);
+            return InvitationResponse.from(saved);
 
-        return InvitationResponse.from(saved);
+        } catch (DataIntegrityViolationException e) {
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT,
+                    "이미 생성된 청첩장이 있습니다."
+            );
+        }
     }
 
     /** 로그인 사용자의 청첩장을 조회한다. */

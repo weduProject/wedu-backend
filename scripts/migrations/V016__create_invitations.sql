@@ -1,7 +1,7 @@
 CREATE TABLE invitations (
                              id BIGINT PRIMARY KEY AUTO_INCREMENT,
 
-                             user_id BIGINT NOT NULL,
+                             user_id BIGINT NOT NULL UNIQUE,
                              template_id VARCHAR(100) NOT NULL,
                              title VARCHAR(255) NOT NULL,
 
