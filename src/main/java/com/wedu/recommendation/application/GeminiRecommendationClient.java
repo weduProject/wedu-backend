@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 
 @Component
 @RequiredArgsConstructor
@@ -23,6 +24,7 @@ public class GeminiRecommendationClient {
             "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent";
 
     private final ObjectMapper objectMapper;
+    private final RestClient geminiRestClient;
 
     @Value("${gemini.api-key}")
     private String apiKey;
@@ -45,14 +47,37 @@ public class GeminiRecommendationClient {
                 )
         );
 
-        String responseBody = RestClient.create()
-                .post()
-                .uri(GEMINI_URL)
-                .header("x-goog-api-key", apiKey)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(requestBody)
-                .retrieve()
-                .body(String.class);
+        String responseBody;
+
+        try {
+            responseBody = geminiRestClient
+                    .post()
+                    .uri(GEMINI_URL)
+                    .header("x-goog-api-key", apiKey)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(requestBody)
+                    .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError() || status.is5xxServerError(),
+                            (requestSpec, response) -> {
+                                throw new BusinessException(
+                                        ErrorCode.RECOMMENDATION_AI_REQUEST_FAILED
+                                );
+                            }
+                    )
+                    .body(String.class);
+
+        } catch (RestClientException e) {
+            throw new BusinessException(
+                    ErrorCode.RECOMMENDATION_AI_REQUEST_FAILED
+            );
+        }
+
+        if (responseBody == null || responseBody.isBlank()) {
+            throw new BusinessException(
+                    ErrorCode.RECOMMENDATION_AI_INVALID_RESPONSE
+            );
+        }
 
         return parseResponse(responseBody);
     }
@@ -119,8 +144,7 @@ public class GeminiRecommendationClient {
 
             if (generatedText == null || generatedText.isBlank()) {
                 throw new BusinessException(
-                        ErrorCode.INVALID_INPUT,
-                        "Gemini 추천 결과가 비어 있습니다."
+                        ErrorCode.RECOMMENDATION_AI_INVALID_RESPONSE
                 );
             }
 
@@ -131,8 +155,7 @@ public class GeminiRecommendationClient {
 
         } catch (JsonProcessingException e) {
             throw new BusinessException(
-                    ErrorCode.INVALID_INPUT,
-                    "Gemini 추천 결과를 처리할 수 없습니다."
+                    ErrorCode.RECOMMENDATION_AI_INVALID_RESPONSE
             );
         }
     }

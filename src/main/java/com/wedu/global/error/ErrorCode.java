@@ -80,6 +80,16 @@ public enum ErrorCode {
             "수집 출처 정보가 올바르지 않습니다."),
     PRODUCT_INVALID_RANK(HttpStatus.BAD_REQUEST, "PRODUCT_400_RANK", "순위는 1 이상이어야 합니다."),
 
+    // --- recommendation 도메인 ---
+    RECOMMENDATION_AI_REQUEST_FAILED(
+            HttpStatus.BAD_GATEWAY,
+            "RECOMMENDATION_502_AI_REQUEST",
+            "AI 추천 요청에 실패했습니다."),
+    RECOMMENDATION_AI_INVALID_RESPONSE(
+            HttpStatus.BAD_GATEWAY,
+            "RECOMMENDATION_502_AI_RESPONSE",
+            "AI 추천 응답을 처리할 수 없습니다."),
+
     // --- proposal 도메인 ---
     PROPOSAL_NOT_FOUND(HttpStatus.NOT_FOUND, "PROPOSAL_404", "나만의 프로포즈를 찾을 수 없습니다."),
     PROPOSAL_OPTION_NOT_SELECTED(
