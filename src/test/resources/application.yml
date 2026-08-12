@@ -46,6 +46,10 @@ jwt:
 
 wedu:
   public-base-url: http://localhost:8080
+  # 컨텍스트 로딩 테스트가 순위 배치까지 돌리지 않도록 끈다.
+  popular-product:
+    ranking:
+      enabled: false
   oauth2:
     frontend-redirect-uri: http://localhost:3000/auth/callback
     login-code-ttl-seconds: 120
