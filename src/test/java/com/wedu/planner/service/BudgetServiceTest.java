@@ -9,12 +9,16 @@ import static org.mockito.Mockito.when;
 import com.wedu.global.error.BusinessException;
 import com.wedu.global.error.ErrorCode;
 import com.wedu.planner.domain.BudgetCategory;
+import com.wedu.planner.domain.Budget;
 import com.wedu.planner.domain.BudgetItem;
 import com.wedu.planner.dto.BudgetCompletionRequest;
 import com.wedu.planner.dto.BudgetItemCreateRequest;
 import com.wedu.planner.dto.BudgetItemResponse;
 import com.wedu.planner.dto.BudgetItemUpdateRequest;
 import com.wedu.planner.dto.BudgetOverviewResponse;
+import com.wedu.planner.dto.BudgetTargetRequest;
+import com.wedu.planner.dto.BudgetTargetResponse;
+import com.wedu.planner.repository.BudgetRepository;
 import com.wedu.planner.repository.BudgetItemRepository;
 import java.math.BigDecimal;
 import java.util.List;
@@ -25,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
 @ExtendWith(MockitoExtension.class)
 class BudgetServiceTest {
@@ -32,11 +37,18 @@ class BudgetServiceTest {
     @Mock
     private BudgetItemRepository budgetItemRepository;
 
+    @Mock
+    private BudgetRepository budgetRepository;
+
+    @Mock
+    private BudgetTargetWriter budgetTargetWriter;
+
     private BudgetService budgetService;
 
     @BeforeEach
     void setUp() {
-        budgetService = new BudgetService(budgetItemRepository);
+        budgetService = new BudgetService(
+                budgetItemRepository, budgetRepository, budgetTargetWriter);
     }
 
     @Test
@@ -60,11 +72,59 @@ class BudgetServiceTest {
     void getOverview() {
         when(budgetItemRepository.findAllByUserIdOrderByIdAsc(1L))
                 .thenReturn(List.of(item()));
+        when(budgetRepository.findByUserId(1L))
+                .thenReturn(Optional.of(Budget.create(1L, amount("10000000"))));
 
         BudgetOverviewResponse response = budgetService.getOverview(1L);
 
         assertThat(response.summary().totalCount()).isEqualTo(1);
+        assertThat(response.totalBudget()).isEqualByComparingTo("10000000");
+        assertThat(response.totalBudgetConfigured()).isTrue();
         assertThat(response.categories().getFirst().items()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("전체 목표 예산을 처음 저장한 뒤 같은 API로 변경한다")
+    void createAndUpdateTarget() {
+        when(budgetTargetWriter.write(1L, amount("30000000")))
+                .thenReturn(new BudgetTargetResponse(amount("30000000")));
+        when(budgetTargetWriter.write(1L, amount("35000000")))
+                .thenReturn(new BudgetTargetResponse(amount("35000000")));
+
+        BudgetTargetResponse created = budgetService.setTarget(
+                1L, new BudgetTargetRequest(amount("30000000")));
+        BudgetTargetResponse updated = budgetService.setTarget(
+                1L, new BudgetTargetRequest(amount("35000000")));
+
+        assertThat(created.totalBudget()).isEqualByComparingTo("30000000");
+        assertThat(updated.totalBudget()).isEqualByComparingTo("35000000");
+    }
+
+    @Test
+    @DisplayName("동시 최초 설정 충돌 시 별도 트랜잭션에서 기존 목표 예산을 갱신한다")
+    void retryTargetUpdateAfterConcurrentInsert() {
+        BudgetTargetRequest request = new BudgetTargetRequest(amount("30000000"));
+        when(budgetTargetWriter.write(1L, request.totalBudget()))
+                .thenThrow(new DataIntegrityViolationException("uk_budgets_user_id"));
+        when(budgetTargetWriter.updateExisting(1L, request.totalBudget()))
+                .thenReturn(new BudgetTargetResponse(request.totalBudget()));
+
+        BudgetTargetResponse response = budgetService.setTarget(1L, request);
+
+        assertThat(response.totalBudget()).isEqualByComparingTo("30000000");
+        verify(budgetTargetWriter).updateExisting(1L, request.totalBudget());
+    }
+
+    @Test
+    @DisplayName("목표 예산 유니크 키와 무관한 데이터 오류는 재시도하지 않는다")
+    void doNotRetryUnrelatedDataIntegrityViolation() {
+        BudgetTargetRequest request = new BudgetTargetRequest(amount("30000000"));
+        DataIntegrityViolationException exception =
+                new DataIntegrityViolationException("other constraint");
+        when(budgetTargetWriter.write(1L, request.totalBudget())).thenThrow(exception);
+
+        assertThatThrownBy(() -> budgetService.setTarget(1L, request))
+                .isSameAs(exception);
     }
 
     @Test

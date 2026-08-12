@@ -102,6 +102,8 @@ class BudgetControllerTest {
         mockMvc.perform(get("/api/budget-items")
                         .with(authentication(authentication)))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalBudget").value(0))
+                .andExpect(jsonPath("$.data.totalBudgetConfigured").value(false))
                 .andExpect(jsonPath("$.data.summary.plannedAmount").value(0))
                 .andExpect(jsonPath("$.data.categories.length()").value(5));
     }

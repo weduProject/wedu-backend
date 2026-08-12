@@ -2,6 +2,7 @@ package com.wedu.global.error;
 
 import com.wedu.global.response.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -25,6 +26,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleBusiness(BusinessException e) {
         ErrorCode ec = e.getErrorCode();
         return ResponseEntity.status(ec.getStatus())
+                .contentType(MediaType.APPLICATION_JSON)
                 .body(ApiResponse.fail(ec.getCode(), e.getMessage()));
     }
 
@@ -36,6 +38,7 @@ public class GlobalExceptionHandler {
                 ? e.getBindingResult().getFieldError().getDefaultMessage()
                 : ec.getMessage();
         return ResponseEntity.status(ec.getStatus())
+                .contentType(MediaType.APPLICATION_JSON)
                 .body(ApiResponse.fail(ec.getCode(), message));
     }
 
@@ -49,6 +52,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleInvalidRequest(Exception ignored) {
         ErrorCode ec = ErrorCode.INVALID_INPUT;
         return ResponseEntity.status(ec.getStatus())
+                .contentType(MediaType.APPLICATION_JSON)
                 .body(ApiResponse.fail(ec.getCode(), ec.getMessage()));
     }
 
@@ -58,6 +62,7 @@ public class GlobalExceptionHandler {
         log.error("Unhandled exception", e);
         ErrorCode ec = ErrorCode.INTERNAL_ERROR;
         return ResponseEntity.status(ec.getStatus())
+                .contentType(MediaType.APPLICATION_JSON)
                 .body(ApiResponse.fail(ec.getCode(), ec.getMessage()));
     }
 }

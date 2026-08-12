@@ -14,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.wedu.planner.domain.BudgetCategory;
 import com.wedu.planner.domain.BudgetItem;
 import com.wedu.planner.repository.BudgetItemRepository;
+import com.wedu.planner.repository.BudgetRepository;
 import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,6 +38,9 @@ class BudgetIntegrationTest {
     @Autowired
     private BudgetItemRepository budgetItemRepository;
 
+    @Autowired
+    private BudgetRepository budgetRepository;
+
     private final UsernamePasswordAuthenticationToken authentication =
             new UsernamePasswordAuthenticationToken(
                     1L, null, List.of(new SimpleGrantedAuthority("ROLE_USER")));
@@ -44,6 +48,7 @@ class BudgetIntegrationTest {
     @BeforeEach
     void setUp() {
         budgetItemRepository.deleteAll();
+        budgetRepository.deleteAll();
     }
 
     @Test
@@ -116,6 +121,42 @@ class BudgetIntegrationTest {
                 .andExpect(status().isOk());
 
         assertThat(budgetItemRepository.findById(venueItemId)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("전체 목표 예산을 저장하고 현황의 잔액과 집행률에 반영한다")
+    void setTargetAndUseItInOverview() throws Exception {
+        create("예식장 계약금", "VENUE", 2000000, 2000000);
+
+        mockMvc.perform(put("/api/budgets/me")
+                        .with(authentication(authentication))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"totalBudget":10000000}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalBudget").value(10000000));
+
+        mockMvc.perform(put("/api/budgets/me")
+                        .with(authentication(authentication))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"totalBudget":20000000}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalBudget").value(20000000));
+
+        mockMvc.perform(get("/api/budget-items")
+                        .with(authentication(authentication)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalBudget").value(20000000))
+                .andExpect(jsonPath("$.data.totalBudgetConfigured").value(true))
+                .andExpect(jsonPath("$.data.summary.plannedAmount").value(2000000))
+                .andExpect(jsonPath("$.data.summary.spentAmount").value(2000000))
+                .andExpect(jsonPath("$.data.summary.balance").value(18000000))
+                .andExpect(jsonPath("$.data.summary.executionRatePercentage").value(10));
     }
 
     private void create(

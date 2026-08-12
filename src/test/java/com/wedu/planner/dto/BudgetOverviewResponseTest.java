@@ -57,8 +57,10 @@ class BudgetOverviewResponseTest {
                 jewelryOne,
                 jewelryTwo,
                 otherOne,
-                otherTwo));
+                otherTwo), new BigDecimal("236000000"));
 
+        assertThat(response.totalBudget()).isEqualByComparingTo("236000000");
+        assertThat(response.totalBudgetConfigured()).isTrue();
         assertThat(response.summary().plannedAmount()).isEqualByComparingTo("236000000");
         assertThat(response.summary().spentAmount()).isEqualByComparingTo("76000000");
         assertThat(response.summary().balance()).isEqualByComparingTo("160000000");
@@ -80,6 +82,7 @@ class BudgetOverviewResponseTest {
         BudgetOverviewResponse response = BudgetOverviewResponse.from(List.of());
 
         assertThat(response.summary().plannedAmount()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(response.totalBudgetConfigured()).isFalse();
         assertThat(response.summary().executionRatePercentage()).isEqualByComparingTo(BigDecimal.ZERO);
         assertThat(response.categories()).hasSize(5);
         assertThat(response.categories()).allSatisfy(category ->
@@ -89,11 +92,24 @@ class BudgetOverviewResponseTest {
     @Test
     @DisplayName("초과 지출은 100퍼센트 초과 집행률과 음수 잔액으로 계산한다")
     void overspending() {
-        BudgetOverviewResponse response = BudgetOverviewResponse.from(List.of(
-                item("초과 지출", BudgetCategory.OTHER, "10000", "15000")));
+        BudgetOverviewResponse response = BudgetOverviewResponse.from(
+                List.of(item("초과 지출", BudgetCategory.OTHER, "10000", "15000")),
+                new BigDecimal("10000"));
 
         assertThat(response.summary().executionRatePercentage()).isEqualByComparingTo("150");
         assertThat(response.summary().balance()).isEqualByComparingTo("-5000");
+    }
+
+    @Test
+    @DisplayName("목표 예산 미설정 사용자는 기존 항목 합계 기준 계산을 유지한다")
+    void fallbackToPlannedAmountWhenTargetIsNotConfigured() {
+        BudgetOverviewResponse response = BudgetOverviewResponse.from(List.of(
+                item("기존 항목", BudgetCategory.OTHER, "10000", "2500")));
+
+        assertThat(response.totalBudget()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(response.totalBudgetConfigured()).isFalse();
+        assertThat(response.summary().balance()).isEqualByComparingTo("7500");
+        assertThat(response.summary().executionRatePercentage()).isEqualByComparingTo("25");
     }
 
     private BudgetItem item(

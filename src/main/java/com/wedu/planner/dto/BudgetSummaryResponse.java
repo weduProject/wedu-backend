@@ -16,24 +16,34 @@ public record BudgetSummaryResponse(
 
     /** 항목들의 합계, 잔액, 완료 건수와 반올림한 집행률을 계산한다. */
     public static BudgetSummaryResponse from(List<BudgetItem> items) {
-        BigDecimal plannedAmount = items.stream()
-                .map(BudgetItem::getPlannedAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return from(items, null);
+    }
+
+    /** 전체 현황은 저장된 목표 예산을 기준으로 잔액과 집행률을 계산한다. */
+    public static BudgetSummaryResponse from(List<BudgetItem> items, BigDecimal totalBudget) {
+        BigDecimal plannedAmount = sumPlannedAmount(items);
+        BigDecimal executionBase = totalBudget == null ? plannedAmount : totalBudget;
         BigDecimal spentAmount = items.stream()
                 .map(BudgetItem::getSpentAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         long completedCount = items.stream().filter(BudgetItem::isCompleted).count();
-        BigDecimal executionRatePercentage = plannedAmount.signum() == 0
+        BigDecimal executionRatePercentage = executionBase.signum() == 0
                 ? BigDecimal.ZERO
                 : spentAmount
                         .multiply(BigDecimal.valueOf(100))
-                        .divide(plannedAmount, 0, RoundingMode.HALF_UP);
+                        .divide(executionBase, 0, RoundingMode.HALF_UP);
         return new BudgetSummaryResponse(
                 plannedAmount,
                 spentAmount,
-                plannedAmount.subtract(spentAmount),
+                executionBase.subtract(spentAmount),
                 completedCount,
                 items.size(),
                 executionRatePercentage);
+    }
+
+    private static BigDecimal sumPlannedAmount(List<BudgetItem> items) {
+        return items.stream()
+                .map(BudgetItem::getPlannedAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }
