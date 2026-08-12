@@ -318,7 +318,7 @@ public class Invitation extends BaseTimeEntity {
         );
     }
 
-    /** 청첩장 내용을 수정한다. */
+    /** 청첩장 내용을 부분 수정한다. */
     public void update(
             String templateId,
             String title,
@@ -356,51 +356,155 @@ public class Invitation extends BaseTimeEntity {
             String bgmUrl,
             String designSettings) {
 
-        validateTemplateId(templateId);
-        validateTitle(title);
+        // 필수값은 요청에 포함된 경우에만 검증
+        if (templateId != null) {
+            validateTemplateId(templateId);
+            this.templateId = templateId;
+        }
 
-        this.templateId = templateId;
-        this.title = title;
+        if (title != null) {
+            validateTitle(title);
+            this.title = title;
+        }
 
-        this.groomName = groomName;
-        this.brideName = brideName;
-        this.groomPhoto = groomPhoto;
-        this.bridePhoto = bridePhoto;
-        this.groomContact = groomContact;
-        this.brideContact = brideContact;
-        this.groomParents = groomParents;
-        this.brideParents = brideParents;
+        // 신랑·신부 정보
+        if (groomName != null) {
+            this.groomName = groomName;
+        }
 
-        this.weddingDate = weddingDate;
-        this.weddingTime = weddingTime;
-        this.venueName = venueName;
-        this.venueAddress = venueAddress;
-        this.venueDetail = venueDetail;
-        this.latitude = latitude;
-        this.longitude = longitude;
+        if (brideName != null) {
+            this.brideName = brideName;
+        }
 
-        this.mainGreeting = mainGreeting;
-        this.invitationMessage = invitationMessage;
-        this.additionalMessage = additionalMessage;
+        if (groomPhoto != null) {
+            this.groomPhoto = groomPhoto;
+        }
 
-        this.groomBank = groomBank;
-        this.groomAccount = groomAccount;
-        this.groomAccountHolder = groomAccountHolder;
-        this.brideBank = brideBank;
-        this.brideAccount = brideAccount;
-        this.brideAccountHolder = brideAccountHolder;
+        if (bridePhoto != null) {
+            this.bridePhoto = bridePhoto;
+        }
 
-        this.groomParentContact = groomParentContact;
-        this.brideParentContact = brideParentContact;
+        if (groomContact != null) {
+            this.groomContact = groomContact;
+        }
 
-        this.transportGuide = transportGuide;
-        this.parkingGuide = parkingGuide;
-        this.publicTransportGuide = publicTransportGuide;
+        if (brideContact != null) {
+            this.brideContact = brideContact;
+        }
 
-        this.mainColor = mainColor;
-        this.fontFamily = fontFamily;
-        this.bgmUrl = bgmUrl;
-        this.designSettings = designSettings;
+        if (groomParents != null) {
+            this.groomParents = groomParents;
+        }
+
+        if (brideParents != null) {
+            this.brideParents = brideParents;
+        }
+
+        // 예식 정보
+        if (weddingDate != null) {
+            this.weddingDate = weddingDate;
+        }
+
+        if (weddingTime != null) {
+            this.weddingTime = weddingTime;
+        }
+
+        if (venueName != null) {
+            this.venueName = venueName;
+        }
+
+        if (venueAddress != null) {
+            this.venueAddress = venueAddress;
+        }
+
+        if (venueDetail != null) {
+            this.venueDetail = venueDetail;
+        }
+
+        if (latitude != null) {
+            this.latitude = latitude;
+        }
+
+        if (longitude != null) {
+            this.longitude = longitude;
+        }
+
+        // 청첩장 문구
+        if (mainGreeting != null) {
+            this.mainGreeting = mainGreeting;
+        }
+
+        if (invitationMessage != null) {
+            this.invitationMessage = invitationMessage;
+        }
+
+        if (additionalMessage != null) {
+            this.additionalMessage = additionalMessage;
+        }
+
+        // 계좌 정보
+        if (groomBank != null) {
+            this.groomBank = groomBank;
+        }
+
+        if (groomAccount != null) {
+            this.groomAccount = groomAccount;
+        }
+
+        if (groomAccountHolder != null) {
+            this.groomAccountHolder = groomAccountHolder;
+        }
+
+        if (brideBank != null) {
+            this.brideBank = brideBank;
+        }
+
+        if (brideAccount != null) {
+            this.brideAccount = brideAccount;
+        }
+
+        if (brideAccountHolder != null) {
+            this.brideAccountHolder = brideAccountHolder;
+        }
+
+        // 혼주 연락처
+        if (groomParentContact != null) {
+            this.groomParentContact = groomParentContact;
+        }
+
+        if (brideParentContact != null) {
+            this.brideParentContact = brideParentContact;
+        }
+
+        // 오시는 길
+        if (transportGuide != null) {
+            this.transportGuide = transportGuide;
+        }
+
+        if (parkingGuide != null) {
+            this.parkingGuide = parkingGuide;
+        }
+
+        if (publicTransportGuide != null) {
+            this.publicTransportGuide = publicTransportGuide;
+        }
+
+        // 디자인 설정
+        if (mainColor != null) {
+            this.mainColor = mainColor;
+        }
+
+        if (fontFamily != null) {
+            this.fontFamily = fontFamily;
+        }
+
+        if (bgmUrl != null) {
+            this.bgmUrl = bgmUrl;
+        }
+
+        if (designSettings != null) {
+            this.designSettings = designSettings;
+        }
     }
 
     /** 청첩장을 발행 상태로 변경한다. */
