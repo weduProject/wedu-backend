@@ -29,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
 @ExtendWith(MockitoExtension.class)
 class BudgetServiceTest {
@@ -39,11 +40,15 @@ class BudgetServiceTest {
     @Mock
     private BudgetRepository budgetRepository;
 
+    @Mock
+    private BudgetTargetWriter budgetTargetWriter;
+
     private BudgetService budgetService;
 
     @BeforeEach
     void setUp() {
-        budgetService = new BudgetService(budgetItemRepository, budgetRepository);
+        budgetService = new BudgetService(
+                budgetItemRepository, budgetRepository, budgetTargetWriter);
     }
 
     @Test
@@ -81,11 +86,10 @@ class BudgetServiceTest {
     @Test
     @DisplayName("전체 목표 예산을 처음 저장한 뒤 같은 API로 변경한다")
     void createAndUpdateTarget() {
-        when(budgetRepository.findByUserId(1L))
-                .thenReturn(Optional.empty())
-                .thenReturn(Optional.of(Budget.create(1L, amount("30000000"))));
-        when(budgetRepository.save(any(Budget.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(budgetTargetWriter.write(1L, amount("30000000")))
+                .thenReturn(new BudgetTargetResponse(amount("30000000")));
+        when(budgetTargetWriter.write(1L, amount("35000000")))
+                .thenReturn(new BudgetTargetResponse(amount("35000000")));
 
         BudgetTargetResponse created = budgetService.setTarget(
                 1L, new BudgetTargetRequest(amount("30000000")));
@@ -94,6 +98,33 @@ class BudgetServiceTest {
 
         assertThat(created.totalBudget()).isEqualByComparingTo("30000000");
         assertThat(updated.totalBudget()).isEqualByComparingTo("35000000");
+    }
+
+    @Test
+    @DisplayName("동시 최초 설정 충돌 시 별도 트랜잭션에서 기존 목표 예산을 갱신한다")
+    void retryTargetUpdateAfterConcurrentInsert() {
+        BudgetTargetRequest request = new BudgetTargetRequest(amount("30000000"));
+        when(budgetTargetWriter.write(1L, request.totalBudget()))
+                .thenThrow(new DataIntegrityViolationException("uk_budgets_user_id"));
+        when(budgetTargetWriter.updateExisting(1L, request.totalBudget()))
+                .thenReturn(new BudgetTargetResponse(request.totalBudget()));
+
+        BudgetTargetResponse response = budgetService.setTarget(1L, request);
+
+        assertThat(response.totalBudget()).isEqualByComparingTo("30000000");
+        verify(budgetTargetWriter).updateExisting(1L, request.totalBudget());
+    }
+
+    @Test
+    @DisplayName("목표 예산 유니크 키와 무관한 데이터 오류는 재시도하지 않는다")
+    void doNotRetryUnrelatedDataIntegrityViolation() {
+        BudgetTargetRequest request = new BudgetTargetRequest(amount("30000000"));
+        DataIntegrityViolationException exception =
+                new DataIntegrityViolationException("other constraint");
+        when(budgetTargetWriter.write(1L, request.totalBudget())).thenThrow(exception);
+
+        assertThatThrownBy(() -> budgetService.setTarget(1L, request))
+                .isSameAs(exception);
     }
 
     @Test

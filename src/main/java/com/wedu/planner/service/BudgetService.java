@@ -13,7 +13,9 @@ import com.wedu.planner.dto.BudgetTargetRequest;
 import com.wedu.planner.dto.BudgetTargetResponse;
 import com.wedu.planner.repository.BudgetItemRepository;
 import com.wedu.planner.repository.BudgetRepository;
+import java.util.Locale;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,21 +26,22 @@ public class BudgetService {
 
     private final BudgetItemRepository budgetItemRepository;
     private final BudgetRepository budgetRepository;
+    private final BudgetTargetWriter budgetTargetWriter;
 
     /** 사용자별 전체 목표 예산을 생성하거나 기존 값을 변경한다. */
-    @Transactional
     public BudgetTargetResponse setTarget(Long userId, BudgetTargetRequest request) {
         validateUserId(userId);
         if (request == null) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "전체 목표 예산 설정 요청은 필수입니다.");
         }
-        Budget budget = budgetRepository.findByUserId(userId).orElse(null);
-        if (budget == null) {
-            budget = Budget.create(userId, request.totalBudget());
-        } else {
-            budget.updateTotalBudget(request.totalBudget());
+        try {
+            return budgetTargetWriter.write(userId, request.totalBudget());
+        } catch (DataIntegrityViolationException exception) {
+            if (!isDuplicateUserBudget(exception)) {
+                throw exception;
+            }
+            return budgetTargetWriter.updateExisting(userId, request.totalBudget());
         }
-        return BudgetTargetResponse.from(budgetRepository.save(budget));
     }
 
     /** 사용자의 예산 항목을 미완료 상태로 저장한다. */
@@ -119,5 +122,18 @@ public class BudgetService {
         if (userId == null) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "사용자 식별자는 필수입니다.");
         }
+    }
+
+    private boolean isDuplicateUserBudget(DataIntegrityViolationException exception) {
+        Throwable cause = exception;
+        while (cause != null) {
+            String message = cause.getMessage();
+            if (message != null
+                    && message.toLowerCase(Locale.ROOT).contains("uk_budgets_user_id")) {
+                return true;
+            }
+            cause = cause.getCause();
+        }
+        return false;
     }
 }

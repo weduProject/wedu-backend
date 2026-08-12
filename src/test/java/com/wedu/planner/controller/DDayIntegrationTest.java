@@ -1,4 +1,4 @@
-package com.wedu.planner.service;
+package com.wedu.planner.controller;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;

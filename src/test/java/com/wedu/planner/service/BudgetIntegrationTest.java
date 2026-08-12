@@ -138,15 +138,25 @@ class BudgetIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.totalBudget").value(10000000));
 
+        mockMvc.perform(put("/api/budgets/me")
+                        .with(authentication(authentication))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"totalBudget":20000000}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalBudget").value(20000000));
+
         mockMvc.perform(get("/api/budget-items")
                         .with(authentication(authentication)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalBudget").value(10000000))
+                .andExpect(jsonPath("$.data.totalBudget").value(20000000))
                 .andExpect(jsonPath("$.data.totalBudgetConfigured").value(true))
                 .andExpect(jsonPath("$.data.summary.plannedAmount").value(2000000))
                 .andExpect(jsonPath("$.data.summary.spentAmount").value(2000000))
-                .andExpect(jsonPath("$.data.summary.balance").value(8000000))
-                .andExpect(jsonPath("$.data.summary.executionRatePercentage").value(20));
+                .andExpect(jsonPath("$.data.summary.balance").value(18000000))
+                .andExpect(jsonPath("$.data.summary.executionRatePercentage").value(10));
     }
 
     private void create(
