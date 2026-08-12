@@ -42,20 +42,36 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    /** 인증 없이 접근 가능한 경로. */
+    /**
+     * 인증 없이 접근 가능한, 메서드 무관 경로.
+     *
+     * <p>같은 prefix 에 쓰기 API 가 추가돼도 실수로 공개되지 않도록, 인증/상품 조회는
+     * {@link #PUBLIC_AUTH_ENDPOINTS}/{@link #PUBLIC_PRODUCT_GET_ENDPOINTS} 로 경로·메서드를 좁혀서 둔다.
+     */
     private static final String[] PUBLIC_ENDPOINTS = {
-            "/api/auth/**",
             "/oauth2/**",
             "/login/**",
             "/swagger-ui/**",
             "/v3/api-docs/**",
             "/actuator/health",
-            "/api/products/**",
-            "/products/**",
             "/api/ddays/shared/**",
             "/api/calendar-events/shared/**",
             "/api/checklist-items/shared/**",
             "/api/budget-items/shared/**",
+    };
+
+    /** 인증 없이 호출 가능한 인증(회원가입/로그인) API. */
+    private static final String[] PUBLIC_AUTH_ENDPOINTS = {
+            "/api/auth/signup",
+            "/api/auth/login",
+            "/api/auth/oauth/token",
+            "/api/auth/temp-login",
+    };
+
+    /** 인증 없이 GET 만 허용하는 상품 조회 API(목록/상세/인기 상품). */
+    private static final String[] PUBLIC_PRODUCT_GET_ENDPOINTS = {
+            "/api/products",
+            "/api/products/*",
     };
 
     private final JwtTokenProvider jwtTokenProvider;
@@ -93,6 +109,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                        .requestMatchers(HttpMethod.POST, PUBLIC_AUTH_ENDPOINTS).permitAll()
+                        .requestMatchers(HttpMethod.GET, PUBLIC_PRODUCT_GET_ENDPOINTS).permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(exception ->
                         exception.defaultAuthenticationEntryPointFor(
