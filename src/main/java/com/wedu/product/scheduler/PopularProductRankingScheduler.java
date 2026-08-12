@@ -21,8 +21,8 @@ public class PopularProductRankingScheduler {
 
     private final PopularProductRankingService popularProductRankingService;
 
-    @Scheduled(cron = "${wedu.popular-product.ranking.cron:0 10 3 * * *}", zone = "UTC")
-    public void refreshDaily() {
+    @Scheduled(cron = "${wedu.popular-product.ranking.cron:0 0 * * * *}", zone = "UTC")
+    public void refreshPeriodically() {
         int ranked = popularProductRankingService.refresh();
         log.info("인기 상품 순위 갱신 완료: {}건", ranked);
     }
