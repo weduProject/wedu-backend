@@ -68,10 +68,16 @@ public class SecurityConfig {
             "/api/auth/temp-login",
     };
 
-    /** 인증 없이 GET 만 허용하는 상품 조회 API(목록/상세/인기 상품). */
+    /**
+     * 인증 없이 GET 만 허용하는 경로.
+     *
+     * <p>상품 목록/상세/인기 상품 API와, {@code src/main/resources/static/products/} 의 상품
+     * 썸네일 정적 파일(Spring Boot 기본 정적 리소스 서빙 경로 {@code /products/**}) 둘 다 포함한다.
+     */
     private static final String[] PUBLIC_PRODUCT_GET_ENDPOINTS = {
             "/api/products",
             "/api/products/*",
+            "/products/**",
     };
 
     private final JwtTokenProvider jwtTokenProvider;
