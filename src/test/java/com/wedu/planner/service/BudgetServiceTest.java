@@ -9,12 +9,16 @@ import static org.mockito.Mockito.when;
 import com.wedu.global.error.BusinessException;
 import com.wedu.global.error.ErrorCode;
 import com.wedu.planner.domain.BudgetCategory;
+import com.wedu.planner.domain.Budget;
 import com.wedu.planner.domain.BudgetItem;
 import com.wedu.planner.dto.BudgetCompletionRequest;
 import com.wedu.planner.dto.BudgetItemCreateRequest;
 import com.wedu.planner.dto.BudgetItemResponse;
 import com.wedu.planner.dto.BudgetItemUpdateRequest;
 import com.wedu.planner.dto.BudgetOverviewResponse;
+import com.wedu.planner.dto.BudgetTargetRequest;
+import com.wedu.planner.dto.BudgetTargetResponse;
+import com.wedu.planner.repository.BudgetRepository;
 import com.wedu.planner.repository.BudgetItemRepository;
 import java.math.BigDecimal;
 import java.util.List;
@@ -32,11 +36,14 @@ class BudgetServiceTest {
     @Mock
     private BudgetItemRepository budgetItemRepository;
 
+    @Mock
+    private BudgetRepository budgetRepository;
+
     private BudgetService budgetService;
 
     @BeforeEach
     void setUp() {
-        budgetService = new BudgetService(budgetItemRepository);
+        budgetService = new BudgetService(budgetItemRepository, budgetRepository);
     }
 
     @Test
@@ -60,11 +67,33 @@ class BudgetServiceTest {
     void getOverview() {
         when(budgetItemRepository.findAllByUserIdOrderByIdAsc(1L))
                 .thenReturn(List.of(item()));
+        when(budgetRepository.findByUserId(1L))
+                .thenReturn(Optional.of(Budget.create(1L, amount("10000000"))));
 
         BudgetOverviewResponse response = budgetService.getOverview(1L);
 
         assertThat(response.summary().totalCount()).isEqualTo(1);
+        assertThat(response.totalBudget()).isEqualByComparingTo("10000000");
+        assertThat(response.totalBudgetConfigured()).isTrue();
         assertThat(response.categories().getFirst().items()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("전체 목표 예산을 처음 저장한 뒤 같은 API로 변경한다")
+    void createAndUpdateTarget() {
+        when(budgetRepository.findByUserId(1L))
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.of(Budget.create(1L, amount("30000000"))));
+        when(budgetRepository.save(any(Budget.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        BudgetTargetResponse created = budgetService.setTarget(
+                1L, new BudgetTargetRequest(amount("30000000")));
+        BudgetTargetResponse updated = budgetService.setTarget(
+                1L, new BudgetTargetRequest(amount("35000000")));
+
+        assertThat(created.totalBudget()).isEqualByComparingTo("30000000");
+        assertThat(updated.totalBudget()).isEqualByComparingTo("35000000");
     }
 
     @Test

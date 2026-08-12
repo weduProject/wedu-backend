@@ -93,6 +93,17 @@ class DDayServiceTest {
     }
 
     @Test
+    @DisplayName("등록된 D-day가 없으면 전용 404 예외를 발생시킨다")
+    void getMyDDayNotFound() {
+        when(dDayRepository.findByUserId(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> dDayService.getMyDDay(1L))
+                .isInstanceOfSatisfying(BusinessException.class, exception ->
+                        assertThat(exception.getErrorCode())
+                                .isEqualTo(ErrorCode.PLANNER_DDAY_NOT_FOUND));
+    }
+
+    @Test
     @DisplayName("내 결혼식 날짜를 수정한다")
     void update() {
         DDay dDay = DDay.create(1L, WEDDING_DATE, LocalDate.of(2026, 7, 21));

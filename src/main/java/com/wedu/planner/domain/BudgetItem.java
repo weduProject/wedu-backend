@@ -88,7 +88,7 @@ public class BudgetItem extends BaseTimeEntity {
         String normalizedTitle = normalizeTitle(title);
         validateCategory(category);
         BigDecimal normalizedPlannedAmount = normalizeAmount(
-                plannedAmount, "전체 예산");
+                plannedAmount, "예정 금액");
         BigDecimal normalizedSpentAmount = spentAmount == null
                 ? BigDecimal.ZERO
                 : normalizeAmount(spentAmount, "집행 금액");
@@ -110,7 +110,7 @@ public class BudgetItem extends BaseTimeEntity {
         String normalizedTitle = normalizeTitle(title);
         validateCategory(category);
         BigDecimal normalizedPlannedAmount = normalizeAmount(
-                plannedAmount, "전체 예산");
+                plannedAmount, "예정 금액");
         BigDecimal normalizedSpentAmount = normalizeAmount(
                 spentAmount, "집행 금액");
         this.title = normalizedTitle;

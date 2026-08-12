@@ -2,13 +2,17 @@ package com.wedu.planner.service;
 
 import com.wedu.global.error.BusinessException;
 import com.wedu.global.error.ErrorCode;
+import com.wedu.planner.domain.Budget;
 import com.wedu.planner.domain.BudgetItem;
 import com.wedu.planner.dto.BudgetCompletionRequest;
 import com.wedu.planner.dto.BudgetItemCreateRequest;
 import com.wedu.planner.dto.BudgetItemResponse;
 import com.wedu.planner.dto.BudgetItemUpdateRequest;
 import com.wedu.planner.dto.BudgetOverviewResponse;
+import com.wedu.planner.dto.BudgetTargetRequest;
+import com.wedu.planner.dto.BudgetTargetResponse;
 import com.wedu.planner.repository.BudgetItemRepository;
+import com.wedu.planner.repository.BudgetRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +23,23 @@ import org.springframework.transaction.annotation.Transactional;
 public class BudgetService {
 
     private final BudgetItemRepository budgetItemRepository;
+    private final BudgetRepository budgetRepository;
+
+    /** 사용자별 전체 목표 예산을 생성하거나 기존 값을 변경한다. */
+    @Transactional
+    public BudgetTargetResponse setTarget(Long userId, BudgetTargetRequest request) {
+        validateUserId(userId);
+        if (request == null) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "전체 목표 예산 설정 요청은 필수입니다.");
+        }
+        Budget budget = budgetRepository.findByUserId(userId).orElse(null);
+        if (budget == null) {
+            budget = Budget.create(userId, request.totalBudget());
+        } else {
+            budget.updateTotalBudget(request.totalBudget());
+        }
+        return BudgetTargetResponse.from(budgetRepository.save(budget));
+    }
 
     /** 사용자의 예산 항목을 미완료 상태로 저장한다. */
     @Transactional
@@ -40,7 +61,10 @@ public class BudgetService {
     public BudgetOverviewResponse getOverview(Long userId) {
         validateUserId(userId);
         return BudgetOverviewResponse.from(
-                budgetItemRepository.findAllByUserIdOrderByIdAsc(userId));
+                budgetItemRepository.findAllByUserIdOrderByIdAsc(userId),
+                budgetRepository.findByUserId(userId)
+                        .map(Budget::getTotalBudget)
+                        .orElse(null));
     }
 
     /** 소유한 예산 항목의 이름, 분류와 금액을 변경한다. */

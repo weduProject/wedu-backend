@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.wedu.friend.service.FriendAccessService;
@@ -112,6 +113,23 @@ class DDayControllerTest {
                         .with(authentication(authentication)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.weddingDate").value("2026-11-14"));
+    }
+
+    @Test
+    @DisplayName("D-day 미등록 조회는 HTML 요청에도 404 JSON으로 응답한다")
+    void getMyDDayWithoutRegistration() throws Exception {
+        when(dDayService.getMyDDay(1L))
+                .thenThrow(new BusinessException(ErrorCode.PLANNER_DDAY_NOT_FOUND));
+
+        mockMvc.perform(get("/api/ddays/me")
+                        .with(authentication(authentication))
+                        .accept(MediaType.TEXT_HTML))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("PLANNER_404"))
+                .andExpect(jsonPath("$.error.message")
+                        .value("등록된 결혼식 D-day를 찾을 수 없습니다."));
     }
 
     @Test

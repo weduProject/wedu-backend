@@ -13,9 +13,9 @@ public record BudgetItemUpdateRequest(
         String title,
         @NotNull(message = "예산 카테고리는 필수입니다.")
         BudgetCategory category,
-        @NotNull(message = "전체 예산은 필수입니다.")
-        @DecimalMin(value = "0", message = "전체 예산은 0원 이상이어야 합니다.")
-        @Digits(integer = 18, fraction = 0, message = "전체 예산은 원 단위 정수여야 합니다.")
+        @NotNull(message = "예정 금액은 필수입니다.")
+        @DecimalMin(value = "0", message = "예정 금액은 0원 이상이어야 합니다.")
+        @Digits(integer = 18, fraction = 0, message = "예정 금액은 원 단위 정수여야 합니다.")
         BigDecimal plannedAmount,
         @NotNull(message = "집행 금액은 필수입니다.")
         @DecimalMin(value = "0", message = "집행 금액은 0원 이상이어야 합니다.")
