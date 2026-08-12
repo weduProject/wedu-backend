@@ -10,14 +10,19 @@ import com.wedu.user.domain.Nickname;
 import com.wedu.user.domain.SocialProvider;
 import com.wedu.user.domain.User;
 import com.wedu.user.dto.UserProfileResponse;
+import com.wedu.user.dto.UserPublicProfileResponse;
 import com.wedu.user.repository.UserRepository;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
@@ -53,6 +58,64 @@ class UserServiceTest {
         assertThatThrownBy(() -> userService.getProfile(99L))
                 .isInstanceOf(BusinessException.class)
                 .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.USER_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("여러 사용자의 공개 프로필을 사용자 ID 기준으로 반환한다")
+    void getPublicProfiles() {
+        User first = sampleUser();
+        User second = User.register(
+                SocialProvider.KAKAO,
+                "kakao-2",
+                "other@example.com",
+                new Nickname("다른사용자"),
+                "https://img/profile.png");
+        ReflectionTestUtils.setField(first, "id", 1L);
+        ReflectionTestUtils.setField(second, "id", 2L);
+        when(userRepository.findAllById(Set.of(1L, 2L))).thenReturn(List.of(first, second));
+
+        Map<Long, UserPublicProfileResponse> profiles =
+                userService.getPublicProfiles(List.of(1L, 2L));
+
+        assertThat(profiles).containsOnlyKeys(1L, 2L);
+        assertThat(profiles.get(2L).nickname()).isEqualTo("다른사용자");
+    }
+
+    @Test
+    @DisplayName("공개 프로필 일괄 조회 중 존재하지 않는 사용자가 있으면 예외가 발생한다")
+    void getPublicProfilesNotFound() {
+        User existing = sampleUser();
+        ReflectionTestUtils.setField(existing, "id", 1L);
+        when(userRepository.findAllById(Set.of(1L, 99L))).thenReturn(List.of(existing));
+
+        assertThatThrownBy(() -> userService.getPublicProfiles(List.of(1L, 99L)))
+                .isInstanceOf(BusinessException.class)
+                .extracting(exception -> ((BusinessException) exception).getErrorCode())
+                .isEqualTo(ErrorCode.USER_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("이메일로 사용자를 찾아 공개 프로필을 반환한다")
+    void getPublicProfileByEmail() {
+        User user = sampleUser();
+        ReflectionTestUtils.setField(user, "id", 1L);
+        when(userRepository.findByEmail("wedu@example.com")).thenReturn(Optional.of(user));
+
+        UserPublicProfileResponse response = userService.getPublicProfileByEmail("wedu@example.com");
+
+        assertThat(response.userId()).isEqualTo(1L);
+        assertThat(response.nickname()).isEqualTo("완규");
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 이메일로 조회하면 예외가 발생한다")
+    void getPublicProfileByEmailNotFound() {
+        when(userRepository.findByEmail("nobody@example.com")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.getPublicProfileByEmail("nobody@example.com"))
+                .isInstanceOf(BusinessException.class)
+                .extracting(exception -> ((BusinessException) exception).getErrorCode())
                 .isEqualTo(ErrorCode.USER_NOT_FOUND);
     }
 

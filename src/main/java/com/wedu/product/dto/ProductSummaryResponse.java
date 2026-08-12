@@ -12,13 +12,13 @@ public record ProductSummaryResponse(
         String vendorName,
         String thumbnailUrl) {
 
-    public static ProductSummaryResponse from(Product product) {
+    public static ProductSummaryResponse from(Product product, String publicBaseUrl) {
         return new ProductSummaryResponse(
                 product.getId(),
                 product.getName(),
                 product.getCategory(),
                 product.getPrice(),
                 product.getVendorName(),
-                product.getThumbnailUrl());
+                ProductThumbnailUrls.toPublicUrl(product.getThumbnailUrl(), publicBaseUrl));
     }
 }

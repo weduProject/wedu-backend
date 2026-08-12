@@ -14,7 +14,7 @@ WEDU는 심리테스트 기반 맞춤 추천으로 사용자에게 프로포즈 
 | 언어 | Java 21 |
 | 프레임워크 | Spring Boot 3.3.5 (Spring MVC) |
 | 빌드 | Gradle (wrapper 포함) |
-| 저장소 | MySQL + Spring Data JPA (테스트는 H2) |
+| 저장소 | MySQL + Spring Data JPA + Flyway (테스트는 H2), Redis(OAuth 일회용 코드) |
 | 인증 | 소셜 로그인(OAuth2: Kakao/Naver/Google) + JWT |
 | API 문서 | springdoc-openapi (Swagger UI) |
 | 테스트 | JUnit 5, Mockito, AssertJ |
@@ -44,9 +44,11 @@ WEDU는 심리테스트 기반 맞춤 추천으로 사용자에게 프로포즈 
 ### 사전 준비
 - JDK 21
 - MySQL (로컬 실행 또는 접속 정보) — 없으면 아래 환경변수로 접속 정보를 주입한다.
+- Redis 6.2+ (OAuth 일회용 로그인 코드 저장, `GETDEL` 사용) — 로컬은 `docker compose up -d redis`
+- 스키마는 Flyway가 기동 시 적용한다 (`src/main/resources/db/migration/`). 기존 운영 DB는 배포 전 1회 수동 baseline — [scripts/migrations/README.md](./scripts/migrations/README.md).
 
 ### 환경변수
-민감값(DB 비밀번호, OAuth client-secret, JWT secret)은 커밋하지 않는다. 환경변수 또는
+민감값(DB 비밀번호, OAuth client-secret, JWT secret, Redis 비밀번호)은 커밋하지 않는다. 환경변수 또는
 `application-secret.yml`(gitignore 처리됨)로 주입한다.
 
 ```bash
@@ -54,8 +56,16 @@ export DB_URL="jdbc:mysql://localhost:3306/wedu?serverTimezone=UTC&characterEnco
 export DB_USERNAME="root"
 export DB_PASSWORD="****"
 export JWT_SECRET="256bit 이상 랜덤 문자열"
-# 로컬 첫 실행이라 스키마 자동 생성이 필요하면:
-export JPA_DDL_AUTO="update"
+# 스키마는 Flyway가 적용한다. JPA ddl-auto 기본값은 validate.
+# (로컬에서만 임시로 쓰려면 JPA_DDL_AUTO=update 가능, 가능하면 V00x SQL을 추가)
+
+# Redis (로컬 기본값: localhost:6379, 비밀번호 없음)
+export REDIS_HOST="localhost"
+export REDIS_PORT="6379"
+# export REDIS_PASSWORD="****"   # 필요할 때만
+# export OAUTH_LOGIN_CODE_TTL_SECONDS="120"  # 기본 120초
+
+# 운영(prod)에서는 REDIS_HOST 필수. CORS_ALLOWED_ORIGINS 와 함께 /etc/wedu/wedu.env 등에 둔다.
 ```
 
 ### 명령어
@@ -76,6 +86,23 @@ export JPA_DDL_AUTO="update"
 
 ### API 문서
 서버 실행 후 Swagger UI: `http://localhost:8080/swagger-ui.html`
+
+### 소셜 로그인 (프론트 콜백)
+
+로그인 시작 URL에 `redirect_uri`를 넘기면, `wedu.cors.allowed-origins` 기반 allowlist에 있을 때만
+그 주소로 콜백한다. 없거나 불허면 `OAUTH_FRONTEND_REDIRECT_URI`(`wedu.oauth2.frontend-redirect-uri`)를 쓴다.
+
+```text
+# 로컬 프론트 → (필요 시 운영) API
+/oauth2/authorization/kakao?redirect_uri=http://localhost:5173/auth/callback
+/oauth2/authorization/google?redirect_uri=http://localhost:5173/auth/callback
+
+# 운영 프론트: 파라미터 생략 가능 (기본 콜백 사용)
+/oauth2/authorization/kakao
+```
+
+origin만 넘기면(`/auth/callback` 없이) 서버가 `/auth/callback`을 붙인다.
+쿼리·프래그먼트가 있거나 allowlist 밖이면 기본값으로 fallback한다.
 
 ---
 

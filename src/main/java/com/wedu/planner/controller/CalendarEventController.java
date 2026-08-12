@@ -1,5 +1,7 @@
 package com.wedu.planner.controller;
 
+import com.wedu.friend.service.FriendAccessService;
+import com.wedu.friend.service.ShareLinkService;
 import com.wedu.global.response.ApiResponse;
 import com.wedu.planner.domain.CalendarEventCategory;
 import com.wedu.planner.dto.CalendarEventCreateRequest;
@@ -31,6 +33,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class CalendarEventController {
 
     private final CalendarEventService calendarEventService;
+    private final FriendAccessService friendAccessService;
+    private final ShareLinkService shareLinkService;
 
     /** 날짜 단위 캘린더 일정을 생성한다. */
     @Operation(summary = "캘린더 일정 생성")
@@ -87,5 +91,67 @@ public class CalendarEventController {
             @PathVariable Long eventId) {
         calendarEventService.delete(userId, eventId);
         return ApiResponse.ok();
+    }
+
+    /** 친구의 캘린더에 일정을 함께 추가한다. */
+    @Operation(summary = "친구 캘린더 일정 생성 (친구만 가능)")
+    @PostMapping("/friends/{ownerUserId}")
+    public ApiResponse<CalendarEventResponse> createFriendEvent(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long ownerUserId,
+            @Valid @RequestBody CalendarEventCreateRequest request) {
+        friendAccessService.assertEditable(userId, ownerUserId);
+        return ApiResponse.ok(calendarEventService.create(ownerUserId, request));
+    }
+
+    /** 친구의 월별 캘린더 일정을 조회한다. */
+    @Operation(summary = "친구 캘린더 일정 조회 (친구만 가능)")
+    @GetMapping("/friends/{ownerUserId}")
+    public ApiResponse<List<CalendarEventResponse>> getFriendMonthlyEvents(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long ownerUserId,
+            @RequestParam Integer year,
+            @RequestParam Integer month,
+            @RequestParam(required = false) CalendarEventCategory category) {
+        friendAccessService.assertEditable(userId, ownerUserId);
+        return ApiResponse.ok(
+                calendarEventService.getMonthlyEvents(ownerUserId, year, month, category));
+    }
+
+    /** 친구의 캘린더 일정을 함께 수정한다. */
+    @Operation(summary = "친구 캘린더 일정 수정 (친구만 가능)")
+    @PutMapping("/friends/{ownerUserId}/{eventId}")
+    public ApiResponse<CalendarEventResponse> updateFriendEvent(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long ownerUserId,
+            @PathVariable Long eventId,
+            @Valid @RequestBody CalendarEventUpdateRequest request) {
+        friendAccessService.assertEditable(userId, ownerUserId);
+        return ApiResponse.ok(calendarEventService.update(ownerUserId, eventId, request));
+    }
+
+    /** 친구의 캘린더 일정을 함께 삭제한다. */
+    @Operation(summary = "친구 캘린더 일정 삭제 (친구만 가능)")
+    @DeleteMapping("/friends/{ownerUserId}/{eventId}")
+    public ApiResponse<Void> deleteFriendEvent(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long ownerUserId,
+            @PathVariable Long eventId) {
+        friendAccessService.assertEditable(userId, ownerUserId);
+        calendarEventService.delete(ownerUserId, eventId);
+        return ApiResponse.ok();
+    }
+
+    /** 공유 링크로 월별 캘린더 일정을 조회 전용으로 확인한다(로그인 불필요). */
+    @Operation(summary = "공유 링크로 캘린더 일정 조회 (조회 전용)")
+    @GetMapping("/shared/{token}")
+    public ApiResponse<List<CalendarEventResponse>> getSharedMonthlyEvents(
+            @PathVariable String token,
+            @RequestParam Integer year,
+            @RequestParam Integer month,
+            @RequestParam(required = false) CalendarEventCategory category) {
+        Long ownerUserId = shareLinkService.resolveOwnerId(token);
+        return ApiResponse.ok(
+                calendarEventService.getMonthlyEvents(ownerUserId, year, month, category));
     }
 }

@@ -32,9 +32,15 @@ dependencies {
     // --- Web (Spring MVC) ---
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
-    // --- Persistence (JPA) ---
+    // --- Persistence (JPA + Flyway) ---
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.flywaydb:flyway-core'
+    runtimeOnly 'org.flywaydb:flyway-mysql'
+
+    // --- Redis (OAuth 일회용 로그인 코드 등 TTL 저장) ---
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
     // --- Security / 인증 (소셜 로그인 + JWT) ---
     implementation 'org.springframework.boot:spring-boot-starter-security'
@@ -59,6 +65,9 @@ dependencies {
     // --- Test ---
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:testcontainers'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

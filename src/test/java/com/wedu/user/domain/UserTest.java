@@ -24,10 +24,39 @@ class UserTest {
     }
 
     @Test
+    @DisplayName("이메일 회원가입은 LOCAL 제공자와 비밀번호 해시를 가진다")
+    void registerLocalUser() {
+        User user = User.registerLocal("wedu@example.com", new Nickname("완규"), "encoded-password");
+
+        assertThat(user.getProvider()).isEqualTo(SocialProvider.LOCAL);
+        assertThat(user.getSocialId()).isEqualTo("wedu@example.com");
+        assertThat(user.getEmail()).isEqualTo("wedu@example.com");
+        assertThat(user.getPasswordHash()).isEqualTo("encoded-password");
+        assertThat(user.isOnboardingCompleted()).isFalse();
+    }
+
+    @Test
     @DisplayName("필수 값이 없으면 가입에 실패한다")
     void registerRequiresMandatoryFields() {
         assertThatThrownBy(() ->
                 User.register(null, "kakao-1", "wedu@example.com", new Nickname("완규"), null))
+                .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    @DisplayName("소셜 가입 팩토리는 LOCAL 제공자를 허용하지 않는다")
+    void registerRejectsLocalProvider() {
+        assertThatThrownBy(() ->
+                User.register(SocialProvider.LOCAL, "local-id", "wedu@example.com", new Nickname("완규"), null))
+                .isInstanceOf(BusinessException.class)
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.INVALID_INPUT);
+    }
+
+    @Test
+    @DisplayName("이메일 회원가입은 비밀번호 해시가 필수다")
+    void registerLocalRequiresPasswordHash() {
+        assertThatThrownBy(() -> User.registerLocal("wedu@example.com", new Nickname("완규"), " "))
                 .isInstanceOf(BusinessException.class);
     }
 

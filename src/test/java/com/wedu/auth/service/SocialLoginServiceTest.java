@@ -1,12 +1,15 @@
 package com.wedu.auth.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.wedu.auth.dto.SocialLoginResult;
+import com.wedu.global.error.BusinessException;
+import com.wedu.global.error.ErrorCode;
 import com.wedu.global.security.jwt.JwtTokenProvider;
 import com.wedu.global.security.oauth.OAuth2UserInfo;
 import com.wedu.user.domain.Nickname;
@@ -112,6 +115,81 @@ class SocialLoginServiceTest {
         assertThat(result.accessToken()).isEqualTo("race-token");
         assertThat(result.userId()).isEqualTo(3L);
         verify(socialUserRegistrar).findExisting(SocialProvider.KAKAO, "kakao-race");
+    }
+
+    @Test
+    @DisplayName("다른 로그인 방식으로 이미 가입된 이메일이면 소셜 신규 가입을 거부한다")
+    void rejectDuplicateEmailAcrossProviders() {
+        OAuth2UserInfo info = new OAuth2UserInfo(
+                SocialProvider.GOOGLE,
+                "google-dup",
+                "dup@example.com",
+                "중복",
+                null);
+
+        when(userRepository.findByProviderAndSocialId(SocialProvider.GOOGLE, "google-dup"))
+                .thenReturn(Optional.empty());
+        when(userRepository.existsByEmail("dup@example.com")).thenReturn(true);
+
+        assertThatThrownBy(() -> socialLoginService.loginOrRegister(info))
+                .isInstanceOf(BusinessException.class)
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.AUTH_EMAIL_ALREADY_EXISTS);
+        verify(socialUserRegistrar, never()).register(any());
+    }
+
+    @Test
+    @DisplayName("소셜 신규 가입 전 이메일을 정규화해 중복 검사와 저장에 사용한다")
+    void normalizeEmailBeforeSocialRegistration() {
+        OAuth2UserInfo info = new OAuth2UserInfo(
+                SocialProvider.GOOGLE,
+                "google-normalized",
+                " Dup@Example.com ",
+                "정규화",
+                null);
+        OAuth2UserInfo normalized = new OAuth2UserInfo(
+                SocialProvider.GOOGLE,
+                "google-normalized",
+                "dup@example.com",
+                "정규화",
+                null);
+        User saved = user(4L, SocialProvider.GOOGLE, "google-normalized", "dup@example.com", "정규화", false);
+
+        when(userRepository.findByProviderAndSocialId(SocialProvider.GOOGLE, "google-normalized"))
+                .thenReturn(Optional.empty());
+        when(userRepository.existsByEmail("dup@example.com")).thenReturn(false);
+        when(socialUserRegistrar.register(normalized)).thenReturn(saved);
+        when(jwtTokenProvider.createAccessToken(4L)).thenReturn("normalized-token");
+
+        SocialLoginResult result = socialLoginService.loginOrRegister(info);
+
+        assertThat(result.email()).isEqualTo("dup@example.com");
+        verify(socialUserRegistrar).register(normalized);
+    }
+
+    @Test
+    @DisplayName("소셜 가입 중 이메일 unique 충돌이 나면 중복 이메일 예외로 변환한다")
+    void convertConcurrentEmailUniqueViolation() {
+        OAuth2UserInfo info = new OAuth2UserInfo(
+                SocialProvider.GOOGLE,
+                "google-email-race",
+                "race@example.com",
+                "레이스",
+                null);
+
+        when(userRepository.findByProviderAndSocialId(SocialProvider.GOOGLE, "google-email-race"))
+                .thenReturn(Optional.empty());
+        when(userRepository.existsByEmail("race@example.com")).thenReturn(false);
+        when(socialUserRegistrar.register(info))
+                .thenThrow(new DataIntegrityViolationException("Duplicate entry for key 'uk_users_email'"));
+        when(socialUserRegistrar.findExisting(SocialProvider.GOOGLE, "google-email-race"))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> socialLoginService.loginOrRegister(info))
+                .isInstanceOf(BusinessException.class)
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.AUTH_EMAIL_ALREADY_EXISTS);
+        verify(jwtTokenProvider, never()).createAccessToken(any());
     }
 
     private User user(

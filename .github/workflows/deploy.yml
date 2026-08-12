@@ -15,24 +15,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '21'
           distribution: 'temurin'
-
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: ${{ runner.os }}-gradle-
+          cache: gradle
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -55,13 +47,73 @@ jobs:
 
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          CORS_ALLOWED_ORIGINS: ${{ secrets.CORS_ALLOWED_ORIGINS }}
+          OAUTH_FRONTEND_REDIRECT_URI: ${{ secrets.OAUTH_FRONTEND_REDIRECT_URI }}
+          KAKAO_CLIENT_ID: ${{ secrets.KAKAO_CLIENT_ID }}
+          KAKAO_CLIENT_SECRET: ${{ secrets.KAKAO_CLIENT_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: CORS_ALLOWED_ORIGINS,OAUTH_FRONTEND_REDIRECT_URI,KAKAO_CLIENT_ID,KAKAO_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,JWT_SECRET,DISCORD_WEBHOOK_URL
           script: |
             set -e
+
+            for name in KAKAO_CLIENT_ID KAKAO_CLIENT_SECRET GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET JWT_SECRET OAUTH_FRONTEND_REDIRECT_URI CORS_ALLOWED_ORIGINS DISCORD_WEBHOOK_URL; do
+              if [ -z "$(printenv "$name")" ]; then
+                echo "GitHub secret is missing: $name"
+                exit 1
+              fi
+            done
+
+            sudo mkdir -p /etc/wedu
+            {
+              printf '%s\n' "KAKAO_CLIENT_ID=$KAKAO_CLIENT_ID"
+              printf '%s\n' "KAKAO_CLIENT_SECRET=$KAKAO_CLIENT_SECRET"
+              printf '%s\n' "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID"
+              printf '%s\n' "GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET"
+              printf '%s\n' "JWT_SECRET=$JWT_SECRET"
+              printf '%s\n' "OAUTH_FRONTEND_REDIRECT_URI=$OAUTH_FRONTEND_REDIRECT_URI"
+              printf '%s\n' "CORS_ALLOWED_ORIGINS=$CORS_ALLOWED_ORIGINS"
+              printf '%s\n' "DISCORD_WEBHOOK_URL=$DISCORD_WEBHOOK_URL"
+              printf '%s\n' "SERVER_FORWARD_HEADERS_STRATEGY=framework"
+            } | sudo tee /etc/wedu/wedu-github.env > /dev/null
+            sudo chmod 600 /etc/wedu/wedu-github.env
+
             cd /home/${{ secrets.EC2_USERNAME }}/app
             sed -i 's/\r$//' deploy.sh
             chmod +x deploy.sh
             bash deploy.sh
+
+      - name: Notify Discord (deploy result)
+        if: always()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          STATUS: ${{ job.status }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+          COMMIT_URL: ${{ github.event.head_commit.url }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ "$STATUS" = "success" ]; then
+            TITLE="✅ wedu-backend 배포 성공"
+            COLOR=3066993
+          else
+            TITLE="❌ wedu-backend 배포 실패"
+            COLOR=15158332
+          fi
+
+          DESC=$(printf '%s\n[커밋](%s) · [실행 로그](%s)' "$COMMIT_MSG" "$COMMIT_URL" "$RUN_URL")
+          PAYLOAD=$(jq -n \
+            --arg title "$TITLE" \
+            --arg desc "$DESC" \
+            --argjson color "$COLOR" \
+            '{embeds: [{title: $title, description: $desc, color: $color}]}')
+
+          curl -sf -X POST "$DISCORD_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD"

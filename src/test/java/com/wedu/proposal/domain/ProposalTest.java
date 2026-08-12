@@ -32,7 +32,7 @@ class ProposalTest {
         Proposal proposal = Proposal.start(1L);
 
         proposal.selectOption(ProposalItemCategory.RING, 10L, "커플링", 150_000);
-        proposal.selectOption(ProposalItemCategory.STUDIO, 20L, "스냅 촬영", 300_000);
+        proposal.selectOption(ProposalItemCategory.PHOTO, 20L, "스냅 촬영", 300_000);
 
         assertThat(proposal.getItems()).hasSize(2);
         assertThat(proposal.totalPrice()).isEqualTo(450_000);
