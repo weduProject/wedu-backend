@@ -1,4 +1,4 @@
-package com.wedu.recommendation.presentation.dto;
+package com.wedu.recommendation.dto;
 
 import com.wedu.product.domain.Product;
 import com.wedu.recommendation.domain.PsychologicalTestResult;

@@ -1,8 +1,8 @@
-package com.wedu.recommendation.presentation;
+package com.wedu.recommendation.controller;
 
 import com.wedu.global.response.ApiResponse;
-import com.wedu.recommendation.application.RecommendationService;
-import com.wedu.recommendation.presentation.dto.AiRecommendationResponse;
+import com.wedu.recommendation.service.RecommendationService;
+import com.wedu.recommendation.dto.AiRecommendationResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

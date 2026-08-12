@@ -1,12 +1,12 @@
-package com.wedu.recommendation.application;
+package com.wedu.recommendation.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wedu.global.error.BusinessException;
 import com.wedu.global.error.ErrorCode;
-import com.wedu.recommendation.presentation.dto.AiRecommendationRequest;
-import com.wedu.recommendation.presentation.dto.AiRecommendationResponse;
+import com.wedu.recommendation.dto.AiRecommendationRequest;
+import com.wedu.recommendation.dto.AiRecommendationResponse;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;

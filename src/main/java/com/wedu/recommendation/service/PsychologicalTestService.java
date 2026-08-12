@@ -1,12 +1,12 @@
-package com.wedu.recommendation.application;
+package com.wedu.recommendation.service;
 
 import com.wedu.global.error.BusinessException;
 import com.wedu.global.error.ErrorCode;
 import com.wedu.recommendation.domain.PsychologicalTestResult;
 import com.wedu.recommendation.domain.enums.PriorityValue;
-import com.wedu.recommendation.infrastructure.PsychologicalTestResultRepository;
-import com.wedu.recommendation.presentation.dto.PrioritySelectionRequest;
-import com.wedu.recommendation.presentation.dto.PsychologicalTestSubmitRequest;
+import com.wedu.recommendation.repository.PsychologicalTestResultRepository;
+import com.wedu.recommendation.dto.PrioritySelectionRequest;
+import com.wedu.recommendation.dto.PsychologicalTestSubmitRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -1,8 +1,8 @@
-package com.wedu.recommendation.presentation;
+package com.wedu.recommendation.controller;
 
 import com.wedu.global.response.ApiResponse;
-import com.wedu.recommendation.application.PsychologicalTestService;
-import com.wedu.recommendation.presentation.dto.PsychologicalTestSubmitRequest;
+import com.wedu.recommendation.service.PsychologicalTestService;
+import com.wedu.recommendation.dto.PsychologicalTestSubmitRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

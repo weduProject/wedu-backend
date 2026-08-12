@@ -1,4 +1,4 @@
-package com.wedu.recommendation.presentation.dto;
+package com.wedu.recommendation.dto;
 
 import java.util.List;
 

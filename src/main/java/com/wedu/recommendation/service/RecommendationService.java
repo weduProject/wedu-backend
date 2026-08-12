@@ -1,4 +1,4 @@
-package com.wedu.recommendation.application;
+package com.wedu.recommendation.service;
 
 import com.wedu.global.error.BusinessException;
 import com.wedu.global.error.ErrorCode;
@@ -6,9 +6,9 @@ import com.wedu.product.domain.Product;
 import com.wedu.product.repository.ProductRepository;
 import com.wedu.recommendation.domain.PsychologicalTestResult;
 import com.wedu.recommendation.domain.enums.BudgetRange;
-import com.wedu.recommendation.infrastructure.PsychologicalTestResultRepository;
-import com.wedu.recommendation.presentation.dto.AiRecommendationRequest;
-import com.wedu.recommendation.presentation.dto.AiRecommendationResponse;
+import com.wedu.recommendation.repository.PsychologicalTestResultRepository;
+import com.wedu.recommendation.dto.AiRecommendationRequest;
+import com.wedu.recommendation.dto.AiRecommendationResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;

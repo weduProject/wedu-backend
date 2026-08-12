@@ -1,4 +1,4 @@
-package com.wedu.recommendation.infrastructure;
+package com.wedu.recommendation.repository;
 
 import com.wedu.recommendation.domain.PsychologicalTestResult;
 import org.springframework.data.jpa.repository.JpaRepository;
