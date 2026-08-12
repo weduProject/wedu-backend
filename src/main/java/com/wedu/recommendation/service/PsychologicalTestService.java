@@ -81,6 +81,12 @@ public class PsychologicalTestService {
                     "우선순위는 정확히 두 개를 선택해야 합니다."
             );
         }
+        if (prioritySelections.stream().anyMatch(selection -> selection == null)) {
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT,
+                    "우선순위 항목은 null일 수 없습니다."
+            );
+        }
 
         boolean hasFirstRank = prioritySelections.stream()
                 .anyMatch(selection -> selection.rank() == 1);
