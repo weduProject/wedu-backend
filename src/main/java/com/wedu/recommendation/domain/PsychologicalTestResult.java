@@ -46,7 +46,7 @@ public class PsychologicalTestResult extends BaseTimeEntity {
     /**
      * User Aggregate를 객체로 참조하지 않고 식별자로만 참조한다.
      */
-    @Column(name = "user_id", nullable = false)
+    @Column(name = "user_id", nullable = false, unique = true)
     private Long userId;
 
     @Enumerated(EnumType.STRING)
