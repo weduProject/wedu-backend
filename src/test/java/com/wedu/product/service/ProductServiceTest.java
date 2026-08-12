@@ -12,6 +12,7 @@ import com.wedu.product.domain.Product;
 import com.wedu.product.domain.ProductCategory;
 import com.wedu.product.dto.ProductSummaryResponse;
 import com.wedu.product.repository.ProductRepository;
+import com.wedu.review.service.ProductRatingService;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,11 +30,14 @@ class ProductServiceTest {
     @Mock
     private ProductRepository productRepository;
 
+    @Mock
+    private ProductRatingService productRatingService;
+
     private ProductService productService;
 
     @BeforeEach
     void setUp() {
-        productService = new ProductService(productRepository, "http://localhost:8080");
+        productService = new ProductService(productRepository, productRatingService, "http://localhost:8080");
     }
 
     @Test

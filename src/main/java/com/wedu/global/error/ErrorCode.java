@@ -80,6 +80,13 @@ public enum ErrorCode {
             "수집 출처 정보가 올바르지 않습니다."),
     PRODUCT_INVALID_RANK(HttpStatus.BAD_REQUEST, "PRODUCT_400_RANK", "순위는 1 이상이어야 합니다."),
 
+    // --- review 도메인 ---
+    REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "REVIEW_404", "리뷰를 찾을 수 없습니다."),
+    REVIEW_FORBIDDEN(HttpStatus.FORBIDDEN, "REVIEW_403", "리뷰를 수정하거나 삭제할 권한이 없습니다."),
+    REVIEW_ALREADY_EXISTS(HttpStatus.CONFLICT, "REVIEW_409", "이미 이 상품에 리뷰를 남겼습니다."),
+    REVIEW_INVALID_RATING(HttpStatus.BAD_REQUEST, "REVIEW_400_RATING", "평점은 1점 이상 5점 이하여야 합니다."),
+    REVIEW_INVALID_CONTENT(HttpStatus.BAD_REQUEST, "REVIEW_400_CONTENT", "후기는 1000자를 넘을 수 없습니다."),
+
     // --- recommendation 도메인 ---
     RECOMMENDATION_AI_REQUEST_FAILED(
             HttpStatus.BAD_GATEWAY,

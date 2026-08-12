@@ -7,7 +7,10 @@ import com.wedu.product.domain.ProductCategory;
 import com.wedu.product.dto.ProductDetailResponse;
 import com.wedu.product.dto.ProductSummaryResponse;
 import com.wedu.product.repository.ProductRepository;
+import com.wedu.review.dto.ProductRatingSummary;
+import com.wedu.review.service.ProductRatingService;
 import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -18,12 +21,15 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final ProductRatingService productRatingService;
     private final String publicBaseUrl;
 
     public ProductService(
             ProductRepository productRepository,
+            ProductRatingService productRatingService,
             @Value("${wedu.public-base-url:http://localhost:8080}") String publicBaseUrl) {
         this.productRepository = productRepository;
+        this.productRatingService = productRatingService;
         this.publicBaseUrl = publicBaseUrl;
     }
 
@@ -37,9 +43,13 @@ public class ProductService {
             Pageable pageable) {
         validatePriceRange(minPrice, maxPrice);
         String normalizedKeyword = normalizeKeyword(keyword);
-        return productRepository.search(category, normalizedKeyword, minPrice, maxPrice, pageable)
-                .stream()
-                .map(product -> ProductSummaryResponse.from(product, publicBaseUrl))
+        List<Product> products =
+                productRepository.search(category, normalizedKeyword, minPrice, maxPrice, pageable);
+        Map<Long, ProductRatingSummary> ratings = productRatingService.summariesOf(
+                products.stream().map(Product::getId).toList());
+        return products.stream()
+                .map(product -> ProductSummaryResponse.from(
+                        product, publicBaseUrl, ratings.get(product.getId())))
                 .toList();
     }
 
@@ -48,7 +58,14 @@ public class ProductService {
     public ProductDetailResponse getDetail(Long productId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PRODUCT_NOT_FOUND));
-        return ProductDetailResponse.from(product, publicBaseUrl);
+        return ProductDetailResponse.from(
+                product, publicBaseUrl, productRatingService.summaryOf(productId));
+    }
+
+    /** 상품이 존재하는지 확인한다. 다른 컨텍스트가 상품 참조의 유효성을 검증할 때 쓴다. */
+    @Transactional(readOnly = true)
+    public boolean exists(Long productId) {
+        return productId != null && productRepository.existsById(productId);
     }
 
     private String normalizeKeyword(String keyword) {
