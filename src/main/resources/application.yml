@@ -78,6 +78,11 @@ jwt:
 wedu:
   # 상품 썸네일 상대 경로(/products/1.jpg) 앞에 붙는 공개 주소. 배포 시 PUBLIC_BASE_URL 로 덮어쓴다.
   public-base-url: ${PUBLIC_BASE_URL:http://localhost:8080}
+  popular-product:
+    # 인기 상품 순위 갱신 배치. 여러 인스턴스로 늘릴 때는 한 곳에서만 켠다(순위를 전부 다시 쓰므로).
+    ranking:
+      enabled: ${POPULAR_PRODUCT_RANKING_ENABLED:true}
+      cron: ${POPULAR_PRODUCT_RANKING_CRON:0 10 3 * * *}
   oauth2:
     frontend-redirect-uri: ${OAUTH_FRONTEND_REDIRECT_URI:http://localhost:5173/auth/callback}
     # 일회용 OAuth 로그인 코드 TTL(초). Redis 키 만료에 사용. Redis 6.2+ (GETDEL) 필요.
