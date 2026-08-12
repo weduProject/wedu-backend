@@ -79,7 +79,19 @@ public class GeminiRecommendationClient {
             );
         }
 
-        return parseResponse(responseBody);
+        AiRecommendationResponse response = parseResponse(responseBody);
+
+        List<Long> candidateIds = request.candidateProducts().stream()
+                .map(AiRecommendationRequest.CandidateProduct::id)
+                .toList();
+
+        List<AiRecommendationResponse.RecommendedProduct> filteredRecommendations =
+                response.recommendations().stream()
+                        .filter(recommendation ->
+                                candidateIds.contains(recommendation.productId()))
+                        .toList();
+
+        return new AiRecommendationResponse(filteredRecommendations);
     }
 
     private String createPrompt(AiRecommendationRequest request) {
@@ -142,7 +154,7 @@ public class GeminiRecommendationClient {
                     .path("text")
                     .asText();
 
-            if (generatedText == null || generatedText.isBlank()) {
+            if (generatedText.isBlank()) {
                 throw new BusinessException(
                         ErrorCode.RECOMMENDATION_AI_INVALID_RESPONSE
                 );
