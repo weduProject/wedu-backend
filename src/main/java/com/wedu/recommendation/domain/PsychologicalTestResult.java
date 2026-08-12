@@ -189,42 +189,111 @@ public class PsychologicalTestResult extends BaseTimeEntity {
             PartnerMbti partnerMbti) {
 
         if (userId == null) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "사용자 ID는 필수입니다.");
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT,
+                    "사용자 ID는 필수입니다."
+            );
         }
+
         if (moodType == null) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "원하는 분위기는 필수입니다.");
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT,
+                    "원하는 분위기는 필수입니다."
+            );
         }
+
         if (locationType == null) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "원하는 장소는 필수입니다.");
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT,
+                    "원하는 장소는 필수입니다."
+            );
         }
+
         if (locationType == LocationType.TRAVEL && region == null) {
             throw new BusinessException(
                     ErrorCode.INVALID_INPUT,
-                    "여행 장소를 선택한 경우 지역 선택은 필수입니다.");
+                    "여행 장소를 선택한 경우 지역 선택은 필수입니다."
+            );
         }
+
         if (preparationType == null) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "준비 방식은 필수입니다.");
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT,
+                    "준비 방식은 필수입니다."
+            );
         }
+
         if (requiredServices == null || requiredServices.isEmpty()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "필요 서비스는 한 개 이상 선택해야 합니다.");
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT,
+                    "필요 서비스는 한 개 이상 선택해야 합니다."
+            );
         }
+
+        // 컬렉션 내부 null 검증
+        if (requiredServices.stream().anyMatch(value -> value == null)) {
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT,
+                    "필요 서비스 항목은 null일 수 없습니다."
+            );
+        }
+
         if (priorityValues == null || priorityValues.size() != 2) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "우선순위는 정확히 두 개를 선택해야 합니다.");
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT,
+                    "우선순위는 정확히 두 개를 선택해야 합니다."
+            );
         }
+
+        // 컬렉션 내부 null 검증
+        if (priorityValues.stream().anyMatch(value -> value == null)) {
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT,
+                    "우선순위 항목은 null일 수 없습니다."
+            );
+        }
+
         if (priorityValues.get(0) == priorityValues.get(1)) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "동일한 우선순위를 중복 선택할 수 없습니다.");
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT,
+                    "동일한 우선순위를 중복 선택할 수 없습니다."
+            );
         }
+
         if (budgetRange == null) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "예산 범위는 필수입니다.");
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT,
+                    "예산 범위는 필수입니다."
+            );
         }
+
         if (excludedElements == null || excludedElements.isEmpty()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "제외 요소는 한 개 이상 선택해야 합니다.");
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT,
+                    "제외 요소는 한 개 이상 선택해야 합니다."
+            );
         }
+
+        // 컬렉션 내부 null 검증
+        if (excludedElements.stream().anyMatch(value -> value == null)) {
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT,
+                    "제외 요소 항목은 null일 수 없습니다."
+            );
+        }
+
         if (scheduleRange == null) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "예정 시기는 필수입니다.");
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT,
+                    "예정 시기는 필수입니다."
+            );
         }
+
         if (partnerMbti == null) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "파트너 MBTI는 필수입니다.");
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT,
+                    "파트너 MBTI는 필수입니다."
+            );
         }
     }
 }
