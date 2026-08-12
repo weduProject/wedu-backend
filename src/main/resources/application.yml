@@ -94,3 +94,6 @@ logging:
   level:
     com.wedu: DEBUG
     org.hibernate.SQL: DEBUG
+
+gemini:
+  api-key: ${GEMINI_API_KEY:}
