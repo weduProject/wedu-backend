@@ -10,6 +10,7 @@ import com.wedu.product.domain.ProductCategory;
 import com.wedu.product.dto.PopularProductResponse;
 import com.wedu.product.repository.PopularProductRepository;
 import com.wedu.product.repository.ProductRepository;
+import com.wedu.review.service.ProductRatingService;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -28,11 +29,14 @@ class PopularProductServiceTest {
     @Mock
     private ProductRepository productRepository;
 
+    @Mock
+    private ProductRatingService productRatingService;
+
     private PopularProductService popularProductService;
 
     @BeforeEach
     void setUp() {
-        popularProductService = new PopularProductService(popularProductRepository, productRepository);
+        popularProductService = new PopularProductService(popularProductRepository, productRepository, productRatingService);
     }
 
     @Test
