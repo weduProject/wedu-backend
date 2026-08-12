@@ -36,7 +36,8 @@ class PopularProductServiceTest {
 
     @BeforeEach
     void setUp() {
-        popularProductService = new PopularProductService(popularProductRepository, productRepository, productRatingService);
+        popularProductService = new PopularProductService(
+                popularProductRepository, productRepository, productRatingService, "https://api.example.com");
     }
 
     @Test
@@ -76,6 +77,19 @@ class PopularProductServiceTest {
         assertThat(result.get(0).productId()).isNull();
         assertThat(result.get(0).category()).isNull();
         assertThat(result.get(0).name()).isEqualTo("외부 수집 상품");
+    }
+
+    @Test
+    @DisplayName("상대 경로 썸네일에 공개 베이스 URL을 붙여서 반환한다")
+    void prependsPublicBaseUrlToThumbnail() {
+        PopularProduct ranking =
+                PopularProduct.rank(1L, "1위 상품", 100_000, "출처", "/products/1.jpg", "/products/1.jpg", 1);
+        when(popularProductRepository.findTop20ByOrderByRankAsc()).thenReturn(List.of(ranking));
+        when(productRepository.findAllById(any())).thenReturn(List.of());
+
+        List<PopularProductResponse> result = popularProductService.getPopularProducts();
+
+        assertThat(result.get(0).thumbnailUrl()).isEqualTo("https://api.example.com/products/1.jpg");
     }
 
     private Product product(Long id, ProductCategory category) {

@@ -1,5 +1,6 @@
 package com.wedu.global.config;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -64,5 +65,11 @@ class SecurityCorsConfigTest {
                         .header(HttpHeaders.ORIGIN, "https://evil.example.com")
                         .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST"))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void allowUnauthenticatedAccessToProductThumbnailStaticFile() throws Exception {
+        mockMvc.perform(get("/products/1.jpg"))
+                .andExpect(status().isOk());
     }
 }
