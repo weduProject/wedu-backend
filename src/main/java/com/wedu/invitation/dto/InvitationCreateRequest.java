@@ -1,11 +1,15 @@
 package com.wedu.invitation.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDate;
 
 public record InvitationCreateRequest(
 
         // 기본 정보
+        @NotBlank(message = "템플릿 ID는 필수입니다.")
         String templateId,
+
+        @NotBlank(message = "제목은 필수입니다.")
         String title,
 
         // 신랑·신부 정보
@@ -54,5 +58,6 @@ public record InvitationCreateRequest(
         String fontFamily,
         String bgmUrl,
         String designSettings
+
 ) {
 }
