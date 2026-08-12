@@ -11,21 +11,26 @@ CREATE TABLE psychological_test_results (
                                             schedule_range VARCHAR(30) NOT NULL,
                                             partner_mbti VARCHAR(10) NOT NULL,
 
-                                            created_at DATETIME(6),
-                                            updated_at DATETIME(6),
+                                            created_at DATETIME(6) NOT NULL,
+                                            updated_at DATETIME(6) NOT NULL,
 
                                             PRIMARY KEY (id)
 );
 
+
 CREATE TABLE psychological_test_required_services (
                                                       psychological_test_result_id BIGINT NOT NULL,
                                                       required_service VARCHAR(30) NOT NULL,
+
+                                                      CONSTRAINT uk_psychological_test_required_services
+                                                          UNIQUE (psychological_test_result_id, required_service),
 
                                                       CONSTRAINT fk_psychological_test_required_services_result
                                                           FOREIGN KEY (psychological_test_result_id)
                                                               REFERENCES psychological_test_results (id)
                                                               ON DELETE CASCADE
 );
+
 
 CREATE TABLE psychological_test_priorities (
                                                psychological_test_result_id BIGINT NOT NULL,
@@ -38,9 +43,13 @@ CREATE TABLE psychological_test_priorities (
                                                        ON DELETE CASCADE
 );
 
+
 CREATE TABLE psychological_test_excluded_elements (
                                                       psychological_test_result_id BIGINT NOT NULL,
                                                       excluded_element VARCHAR(40) NOT NULL,
+
+                                                      CONSTRAINT uk_psychological_test_excluded_elements
+                                                          UNIQUE (psychological_test_result_id, excluded_element),
 
                                                       CONSTRAINT fk_psychological_test_excluded_elements_result
                                                           FOREIGN KEY (psychological_test_result_id)
