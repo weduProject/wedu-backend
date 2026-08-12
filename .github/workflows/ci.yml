@@ -25,4 +25,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build and Test
+        env:
+          JWT_SECRET: test-jwt-secret-key-for-ci-testing-only-12345678901234567890
+          GEMINI_API_KEY: test-gemini-api-key
         run: ./gradlew clean build

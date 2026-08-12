@@ -13,14 +13,14 @@ public record ProductDetailResponse(
         String thumbnailUrl,
         String description) {
 
-    public static ProductDetailResponse from(Product product) {
+    public static ProductDetailResponse from(Product product, String publicBaseUrl) {
         return new ProductDetailResponse(
                 product.getId(),
                 product.getName(),
                 product.getCategory(),
                 product.getPrice(),
                 product.getVendorName(),
-                product.getThumbnailUrl(),
+                ProductThumbnailUrls.toPublicUrl(product.getThumbnailUrl(), publicBaseUrl),
                 product.getDescription());
     }
 }

@@ -1,52 +1,75 @@
 package com.wedu.global.security.oauth;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wedu.auth.dto.SocialLoginResult;
 import com.wedu.global.error.BusinessException;
 import com.wedu.global.error.ErrorCode;
-import java.time.Clock;
-import java.time.Instant;
-import java.util.Map;
+import java.time.Duration;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 /**
- * 소셜 로그인 직후 JWT 를 URL 에 노출하지 않기 위한 일회용 교환 코드를 잠깐 보관한다.
+ * 소셜 로그인 직후 JWT 를 URL 에 노출하지 않기 위한 일회용 교환 코드를 Redis 에 보관한다.
+ *
+ * <p>TTL 만료와 {@code GETDEL} 기반 원자적 소비로 다중 인스턴스·재시작에서도 일회성을 보장한다.
+ * Redis 6.2+ 가 필요하다.
  */
 @Component
 public class OAuthLoginCodeStore {
 
-    private static final long TTL_SECONDS = 120;
+    static final String KEY_PREFIX = "wedu:oauth:login-code:";
 
-    private final Clock clock;
-    private final Map<String, Entry> store = new ConcurrentHashMap<>();
+    private final StringRedisTemplate redisTemplate;
+    private final ObjectMapper objectMapper;
+    private final Duration ttl;
 
-    public OAuthLoginCodeStore(Clock clock) {
-        this.clock = clock;
+    public OAuthLoginCodeStore(
+            StringRedisTemplate redisTemplate,
+            ObjectMapper objectMapper,
+            @Value("${wedu.oauth2.login-code-ttl-seconds:120}") long ttlSeconds) {
+        if (ttlSeconds <= 0) {
+            throw new IllegalArgumentException(
+                    "wedu.oauth2.login-code-ttl-seconds must be positive, but was " + ttlSeconds);
+        }
+        this.redisTemplate = redisTemplate;
+        this.objectMapper = objectMapper;
+        this.ttl = Duration.ofSeconds(ttlSeconds);
     }
 
     public String issue(SocialLoginResult result) {
-        purgeExpired();
         String code = UUID.randomUUID().toString().replace("-", "");
-        store.put(code, new Entry(result, clock.instant().plusSeconds(TTL_SECONDS)));
+        redisTemplate.opsForValue().set(key(code), serialize(result), ttl);
         return code;
     }
 
     public SocialLoginResult consume(String code) {
-        purgeExpired();
-        Entry entry = store.remove(code);
-        Instant now = clock.instant();
-        if (entry == null || !entry.expiresAt().isAfter(now)) {
+        String payload = redisTemplate.opsForValue().getAndDelete(key(code));
+        if (payload == null) {
             throw new BusinessException(ErrorCode.AUTH_OAUTH_CODE_INVALID);
         }
-        return entry.result();
+        return deserialize(payload);
     }
 
-    private void purgeExpired() {
-        Instant now = clock.instant();
-        store.entrySet().removeIf(e -> !e.getValue().expiresAt().isAfter(now));
+    private static String key(String code) {
+        return KEY_PREFIX + code;
     }
 
-    private record Entry(SocialLoginResult result, Instant expiresAt) {
+    private String serialize(SocialLoginResult result) {
+        try {
+            return objectMapper.writeValueAsString(result);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to serialize OAuth login result", e);
+        }
+    }
+
+    private SocialLoginResult deserialize(String payload) {
+        try {
+            return objectMapper.readValue(payload, SocialLoginResult.class);
+        } catch (JsonProcessingException e) {
+            throw new BusinessException(ErrorCode.AUTH_OAUTH_CODE_INVALID);
+        }
     }
 }

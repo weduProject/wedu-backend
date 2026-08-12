@@ -23,8 +23,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepository;
-import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
@@ -44,17 +44,18 @@ public class SecurityConfig {
 
     /** 인증 없이 접근 가능한 경로. */
     private static final String[] PUBLIC_ENDPOINTS = {
-        "/api/auth/**",
-        "/oauth2/**",
-        "/login/**",
-        "/swagger-ui/**",
-        "/v3/api-docs/**",
-        "/actuator/health",
-        "/api/products/**",
+            "/api/auth/**",
+            "/oauth2/**",
+            "/login/**",
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
+            "/actuator/health",
+            "/api/products/**",
+            "/products/**",
             "/api/ddays/shared/**",
-        "/api/calendar-events/shared/**",
-        "/api/checklist-items/shared/**",
-        "/api/budget-items/shared/**",
+            "/api/calendar-events/shared/**",
+            "/api/checklist-items/shared/**",
+            "/api/budget-items/shared/**",
     };
 
     private final JwtTokenProvider jwtTokenProvider;
@@ -78,8 +79,10 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(
-            HttpSecurity http, OAuth2AuthorizedClientRepository oauth2AuthorizedClientRepository)
+            HttpSecurity http,
+            OAuth2AuthorizedClientRepository oauth2AuthorizedClientRepository)
             throws Exception {
+
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
@@ -91,31 +94,41 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                         .anyRequest().authenticated())
-                .exceptionHandling(exception -> exception.defaultAuthenticationEntryPointFor(
-                        new HttpStatusEntryPoint(UNAUTHORIZED),
-                        new AntPathRequestMatcher("/api/**")))
+                .exceptionHandling(exception ->
+                        exception.defaultAuthenticationEntryPointFor(
+                                new HttpStatusEntryPoint(UNAUTHORIZED),
+                                new AntPathRequestMatcher("/api/**")))
                 .oauth2Login(oauth2 -> oauth2
                         .authorizationEndpoint(endpoint -> endpoint
-                                .authorizationRequestRepository(authorizationRequestRepository))
-                        .authorizedClientRepository(oauth2AuthorizedClientRepository)
+                                .authorizationRequestRepository(
+                                        authorizationRequestRepository))
+                        .authorizedClientRepository(
+                                oauth2AuthorizedClientRepository)
                         .successHandler(oAuth2SuccessHandler)
                         .failureHandler(oAuth2FailureHandler))
                 .addFilterBefore(
                         new JwtAuthenticationFilter(jwtTokenProvider),
                         UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
+
         configuration.setAllowedOrigins(allowedOrigins);
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Origin"));
+        configuration.setAllowedMethods(
+                List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(
+                List.of("Authorization", "Content-Type", "Accept", "Origin"));
         configuration.setMaxAge(3600L);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
         source.registerCorsConfiguration("/**", configuration);
+
         return source;
     }
 }
