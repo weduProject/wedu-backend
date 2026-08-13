@@ -3,6 +3,7 @@ package com.wedu.community.controller;
 import com.wedu.community.dto.CommunityLikeResponse;
 import com.wedu.community.service.CommunityLikeService;
 import com.wedu.global.response.ApiResponse;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Positive;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /** 인증 사용자의 커뮤니티 좋아요 HTTP 요청을 처리한다. */
+@Hidden
 @Tag(name = "Community Like", description = "커뮤니티 게시글·댓글·답글 좋아요 등록과 취소")
 @RestController
 @RequestMapping("/api/community")

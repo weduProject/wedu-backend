@@ -4,6 +4,7 @@ import com.wedu.friend.dto.FriendAddRequest;
 import com.wedu.friend.service.FriendService;
 import com.wedu.global.response.ApiResponse;
 import com.wedu.user.dto.UserPublicProfileResponse;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /** 인증 사용자의 친구 추가/삭제/목록 조회 HTTP 요청을 처리한다. */
+@Hidden
 @Tag(name = "Friend", description = "친구 추가/삭제/목록 조회")
 @RestController
 @RequestMapping("/api/friends")

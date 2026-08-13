@@ -6,6 +6,7 @@ import com.wedu.global.response.ApiResponse;
 import com.wedu.planner.dto.DDayRequest;
 import com.wedu.planner.dto.DDayResponse;
 import com.wedu.planner.service.DDayService;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -65,6 +66,7 @@ public class DDayController {
     }
 
     /** 친구의 결혼식 D-day를 조회한다. */
+    @Hidden
     @Operation(summary = "친구의 D-day 조회 (친구만 가능)")
     @GetMapping("/friends/{ownerUserId}")
     public ApiResponse<DDayResponse> getFriendDDay(
@@ -74,6 +76,7 @@ public class DDayController {
     }
 
     /** 친구의 결혼식 날짜를 함께 수정한다. */
+    @Hidden
     @Operation(summary = "친구의 D-day 수정 (친구만 가능)")
     @PatchMapping("/friends/{ownerUserId}")
     public ApiResponse<DDayResponse> updateFriendDDay(
@@ -85,6 +88,7 @@ public class DDayController {
     }
 
     /** 공유 링크로 D-day를 조회 전용으로 확인한다(로그인 불필요). */
+    @Hidden
     @Operation(summary = "공유 링크로 D-day 조회 (조회 전용)")
     @GetMapping("/shared/{token}")
     public ApiResponse<DDayResponse> getSharedDDay(@PathVariable String token) {

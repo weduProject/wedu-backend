@@ -9,6 +9,7 @@ import com.wedu.planner.dto.BudgetItemResponse;
 import com.wedu.planner.dto.BudgetItemUpdateRequest;
 import com.wedu.planner.dto.BudgetOverviewResponse;
 import com.wedu.planner.service.BudgetService;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -82,6 +83,7 @@ public class BudgetController {
     }
 
     /** 친구의 예산에 항목을 함께 추가한다. */
+    @Hidden
     @Operation(summary = "친구 예산 항목 생성 (친구만 가능)")
     @PostMapping("/friends/{ownerUserId}")
     public ApiResponse<BudgetItemResponse> createFriendItem(
@@ -93,6 +95,7 @@ public class BudgetController {
     }
 
     /** 친구의 예산 현황을 조회한다. */
+    @Hidden
     @Operation(summary = "친구 예산 현황 조회 (친구만 가능)")
     @GetMapping("/friends/{ownerUserId}")
     public ApiResponse<BudgetOverviewResponse> getFriendOverview(
@@ -102,6 +105,7 @@ public class BudgetController {
     }
 
     /** 친구의 예산 항목을 함께 수정한다. */
+    @Hidden
     @Operation(summary = "친구 예산 항목 수정 (친구만 가능)")
     @PutMapping("/friends/{ownerUserId}/{itemId}")
     public ApiResponse<BudgetItemResponse> updateFriendItem(
@@ -114,6 +118,7 @@ public class BudgetController {
     }
 
     /** 친구의 예산 항목 결제 완료 상태를 함께 변경한다. */
+    @Hidden
     @Operation(summary = "친구 예산 항목 완료 상태 변경 (친구만 가능)")
     @PatchMapping("/friends/{ownerUserId}/{itemId}/completion")
     public ApiResponse<BudgetItemResponse> changeFriendCompletion(
@@ -126,6 +131,7 @@ public class BudgetController {
     }
 
     /** 친구의 예산 항목을 함께 삭제한다. */
+    @Hidden
     @Operation(summary = "친구 예산 항목 삭제 (친구만 가능)")
     @DeleteMapping("/friends/{ownerUserId}/{itemId}")
     public ApiResponse<Void> deleteFriendItem(
@@ -138,6 +144,7 @@ public class BudgetController {
     }
 
     /** 공유 링크로 예산 현황을 조회 전용으로 확인한다(로그인 불필요). */
+    @Hidden
     @Operation(summary = "공유 링크로 예산 현황 조회 (조회 전용)")
     @GetMapping("/shared/{token}")
     public ApiResponse<BudgetOverviewResponse> getSharedOverview(@PathVariable String token) {

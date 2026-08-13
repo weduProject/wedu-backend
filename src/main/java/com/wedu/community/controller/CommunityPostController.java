@@ -8,6 +8,7 @@ import com.wedu.community.dto.CommunityPostPageResponse;
 import com.wedu.community.dto.CommunityPostUpdateRequest;
 import com.wedu.community.service.CommunityPostService;
 import com.wedu.global.response.ApiResponse;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /** 인증 사용자의 커뮤니티 게시글 HTTP 요청을 처리한다. */
+@Hidden
 @Tag(name = "Community Post", description = "커뮤니티 게시글 작성·조회·검색·수정·삭제")
 @RestController
 @RequestMapping("/api/community/posts")

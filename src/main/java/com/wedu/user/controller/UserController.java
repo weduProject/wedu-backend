@@ -4,6 +4,7 @@ import com.wedu.global.response.ApiResponse;
 import com.wedu.user.dto.UpdateProfileRequest;
 import com.wedu.user.dto.UserProfileResponse;
 import com.wedu.user.service.UserService;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -60,6 +61,7 @@ public class UserController {
         return ApiResponse.ok(userService.completeOnboarding(userId));
     }
 
+    @Hidden
     @Operation(
             summary = "내 프로필 수정",
             description = "마이페이지(018)와 온보딩(002) 초기 닉네임·이미지 설정에 공통으로 사용한다.")

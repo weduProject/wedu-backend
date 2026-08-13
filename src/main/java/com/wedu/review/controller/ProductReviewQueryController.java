@@ -3,6 +3,7 @@ package com.wedu.review.controller;
 import com.wedu.global.response.ApiResponse;
 import com.wedu.review.dto.ProductReviewPageResponse;
 import com.wedu.review.service.ProductReviewService;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /** 상품 상세 화면의 후기 목록 조회를 처리한다. 비로그인도 볼 수 있다. */
+@Hidden
 @Tag(name = "Product Review", description = "상품 리뷰 작성·수정·삭제·내 리뷰")
 @RestController
 @RequestMapping("/api/products/{productId}/reviews")

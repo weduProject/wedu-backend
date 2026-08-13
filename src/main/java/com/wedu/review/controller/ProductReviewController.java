@@ -6,6 +6,7 @@ import com.wedu.review.dto.ProductReviewPageResponse;
 import com.wedu.review.dto.ProductReviewResponse;
 import com.wedu.review.dto.ProductReviewUpdateRequest;
 import com.wedu.review.service.ProductReviewService;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
  * <p>상품 조회 경로(`/api/products/**`)는 비로그인에게 열려 있으므로, 쓰기는 인증이 필요한
  * `/api/reviews` 아래에 둔다.
  */
+@Hidden
 @Tag(name = "Product Review", description = "상품 리뷰 작성·수정·삭제·내 리뷰")
 @RestController
 @RequestMapping("/api/reviews")
