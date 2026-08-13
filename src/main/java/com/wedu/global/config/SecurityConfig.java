@@ -8,6 +8,7 @@ import com.wedu.global.security.oauth.HttpCookieOAuth2AuthorizationRequestReposi
 import com.wedu.global.security.oauth.NoopOAuth2AuthorizedClientRepository;
 import com.wedu.global.security.oauth.OAuth2FailureHandler;
 import com.wedu.global.security.oauth.OAuth2SuccessHandler;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -141,7 +142,11 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(allowedOrigins);
+        // 공유 dev 서버가 없어 팀원들이 로컬 개발 중에도 이 서버(prod)를 직접 호출하는 상황을
+        // 감안해, 운영 도메인(allowedOrigins)에 로컬 개발 서버 origin을 추가로 항상 허용한다.
+        List<String> corsOrigins = new ArrayList<>(allowedOrigins);
+        corsOrigins.addAll(LocalDevOrigins.ORIGINS);
+        configuration.setAllowedOrigins(corsOrigins);
         configuration.setAllowedMethods(
                 List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(

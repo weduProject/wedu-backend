@@ -60,6 +60,17 @@ class SecurityCorsConfigTest {
     }
 
     @Test
+    void allowPreflightRequestFromLocalDevOriginEvenWhenNotConfigured() throws Exception {
+        mockMvc.perform(options("/api/auth/login")
+                        .header(HttpHeaders.ORIGIN, "http://localhost:5173")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, "Authorization,Content-Type"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(
+                        HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "http://localhost:5173"));
+    }
+
+    @Test
     void rejectPreflightRequestFromUnconfiguredOrigin() throws Exception {
         mockMvc.perform(options("/api/auth/login")
                         .header(HttpHeaders.ORIGIN, "https://evil.example.com")
