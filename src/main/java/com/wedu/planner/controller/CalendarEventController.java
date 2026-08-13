@@ -8,6 +8,7 @@ import com.wedu.planner.dto.CalendarEventCreateRequest;
 import com.wedu.planner.dto.CalendarEventResponse;
 import com.wedu.planner.dto.CalendarEventUpdateRequest;
 import com.wedu.planner.service.CalendarEventService;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -62,6 +63,7 @@ public class CalendarEventController {
     }
 
     /** 오늘 이후의 다가오는 내 일정을 조회한다. */
+    @Hidden
     @Operation(summary = "다가오는 캘린더 일정 조회")
     @GetMapping("/upcoming")
     public ApiResponse<List<CalendarEventResponse>> getUpcomingEvents(
@@ -94,6 +96,7 @@ public class CalendarEventController {
     }
 
     /** 친구의 캘린더에 일정을 함께 추가한다. */
+    @Hidden
     @Operation(summary = "친구 캘린더 일정 생성 (친구만 가능)")
     @PostMapping("/friends/{ownerUserId}")
     public ApiResponse<CalendarEventResponse> createFriendEvent(
@@ -105,6 +108,7 @@ public class CalendarEventController {
     }
 
     /** 친구의 월별 캘린더 일정을 조회한다. */
+    @Hidden
     @Operation(summary = "친구 캘린더 일정 조회 (친구만 가능)")
     @GetMapping("/friends/{ownerUserId}")
     public ApiResponse<List<CalendarEventResponse>> getFriendMonthlyEvents(
@@ -119,6 +123,7 @@ public class CalendarEventController {
     }
 
     /** 친구의 캘린더 일정을 함께 수정한다. */
+    @Hidden
     @Operation(summary = "친구 캘린더 일정 수정 (친구만 가능)")
     @PutMapping("/friends/{ownerUserId}/{eventId}")
     public ApiResponse<CalendarEventResponse> updateFriendEvent(
@@ -131,6 +136,7 @@ public class CalendarEventController {
     }
 
     /** 친구의 캘린더 일정을 함께 삭제한다. */
+    @Hidden
     @Operation(summary = "친구 캘린더 일정 삭제 (친구만 가능)")
     @DeleteMapping("/friends/{ownerUserId}/{eventId}")
     public ApiResponse<Void> deleteFriendEvent(
@@ -143,6 +149,7 @@ public class CalendarEventController {
     }
 
     /** 공유 링크로 월별 캘린더 일정을 조회 전용으로 확인한다(로그인 불필요). */
+    @Hidden
     @Operation(summary = "공유 링크로 캘린더 일정 조회 (조회 전용)")
     @GetMapping("/shared/{token}")
     public ApiResponse<List<CalendarEventResponse>> getSharedMonthlyEvents(

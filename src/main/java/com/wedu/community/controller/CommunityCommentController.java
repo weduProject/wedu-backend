@@ -7,6 +7,7 @@ import com.wedu.community.dto.CommunityCommentUpdateRequest;
 import com.wedu.community.dto.CommunityReplyPageResponse;
 import com.wedu.community.service.CommunityCommentService;
 import com.wedu.global.response.ApiResponse;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /** 인증 사용자의 커뮤니티 댓글 HTTP 요청을 처리한다. */
+@Hidden
 @Tag(name = "Community Comment", description = "커뮤니티 댓글·답글 생성·조회·수정·삭제")
 @RestController
 @RequestMapping("/api/community")
