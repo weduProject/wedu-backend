@@ -1,5 +1,6 @@
 package com.wedu.global.security.oauth;
 
+import com.wedu.global.config.LocalDevOrigins;
 import java.net.URI;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -31,6 +32,9 @@ public class FrontendRedirectUriResolver {
         this.defaultFrontendRedirectUri = requireNormalizedCallback(defaultFrontendRedirectUri);
         Set<String> allowed = new LinkedHashSet<>();
         for (String origin : allowedOrigins) {
+            normalizeToCallback(origin).ifPresent(allowed::add);
+        }
+        for (String origin : LocalDevOrigins.ORIGINS) {
             normalizeToCallback(origin).ifPresent(allowed::add);
         }
         allowed.add(this.defaultFrontendRedirectUri);

@@ -85,6 +85,19 @@ class FrontendRedirectUriResolverTest {
     }
 
     @Test
+    @DisplayName("CORS 허용 목록에 localhost가 없어도(prod 상황) 로그인 리다이렉트는 허용한다")
+    void localDevRedirectAllowedEvenWhenNotInCorsAllowlist() {
+        FrontendRedirectUriResolver prodLikeResolver = new FrontendRedirectUriResolver(
+                DEFAULT_REDIRECT,
+                List.of("https://wedu.io.kr", "https://www.wedu.io.kr"));
+
+        assertThat(prodLikeResolver.resolve("http://localhost:5173/auth/callback"))
+                .contains("http://localhost:5173/auth/callback");
+        assertThat(prodLikeResolver.resolve("http://localhost:3000/auth/callback"))
+                .contains("http://localhost:3000/auth/callback");
+    }
+
+    @Test
     @DisplayName("불허면 기본 frontend-redirect-uri 로 fallback 한다")
     void resolveOrDefaultFallsBack() {
         assertThat(resolver.resolveOrDefault("http://evil.com/auth/callback"))
