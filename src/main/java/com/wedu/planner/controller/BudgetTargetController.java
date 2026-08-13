@@ -5,6 +5,7 @@ import com.wedu.global.response.ApiResponse;
 import com.wedu.planner.dto.BudgetTargetRequest;
 import com.wedu.planner.dto.BudgetTargetResponse;
 import com.wedu.planner.service.BudgetService;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -34,6 +35,7 @@ public class BudgetTargetController {
         return ApiResponse.ok(budgetService.setTarget(userId, request));
     }
 
+    @Hidden
     @Operation(summary = "친구 전체 목표 예산 설정 또는 변경 (친구만 가능)")
     @PutMapping("/friends/{ownerUserId}")
     public ApiResponse<BudgetTargetResponse> setFriendTarget(
