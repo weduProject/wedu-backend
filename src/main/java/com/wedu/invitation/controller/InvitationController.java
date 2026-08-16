@@ -5,7 +5,6 @@ import com.wedu.invitation.dto.InvitationCreateRequest;
 import com.wedu.invitation.dto.InvitationResponse;
 import com.wedu.invitation.dto.InvitationUpdateRequest;
 import com.wedu.invitation.service.InvitationService;
-import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -19,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /** 모바일 청첩장 생성·조회·수정·발행 HTTP 요청을 처리한다. */
-@Hidden
 @Tag(name = "Invitation", description = "모바일 청첩장")
 @RestController
 @RequestMapping("/api/invitations")

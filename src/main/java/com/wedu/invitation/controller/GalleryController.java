@@ -4,7 +4,6 @@ import com.wedu.global.response.ApiResponse;
 import com.wedu.invitation.dto.GalleryImageCreateRequest;
 import com.wedu.invitation.dto.GalleryImageResponse;
 import com.wedu.invitation.service.GalleryService;
-import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -18,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /** 모바일 청첩장 갤러리 이미지 등록·조회 HTTP 요청을 처리한다. */
-@Hidden
 @Tag(name = "Invitation Gallery", description = "모바일 청첩장 갤러리")
 @RestController
 @RequestMapping("/api/invitations/me/gallery")

@@ -88,7 +88,6 @@ public class DDayController {
     }
 
     /** 공유 링크로 D-day를 조회 전용으로 확인한다(로그인 불필요). */
-    @Hidden
     @Operation(summary = "공유 링크로 D-day 조회 (조회 전용)")
     @GetMapping("/shared/{token}")
     public ApiResponse<DDayResponse> getSharedDDay(@PathVariable String token) {

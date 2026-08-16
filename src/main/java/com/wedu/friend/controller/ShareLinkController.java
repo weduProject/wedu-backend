@@ -3,7 +3,6 @@ package com.wedu.friend.controller;
 import com.wedu.friend.dto.ShareLinkResponse;
 import com.wedu.friend.service.ShareLinkService;
 import com.wedu.global.response.ApiResponse;
-import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /** 내 플래너 조회 전용 공유 링크 발급/조회 HTTP 요청을 처리한다. */
-@Hidden
 @Tag(name = "ShareLink", description = "플래너 조회 전용 공유 링크")
 @RestController
 @RequestMapping("/api/share-links")
