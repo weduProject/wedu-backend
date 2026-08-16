@@ -144,7 +144,6 @@ public class BudgetController {
     }
 
     /** 공유 링크로 예산 현황을 조회 전용으로 확인한다(로그인 불필요). */
-    @Hidden
     @Operation(summary = "공유 링크로 예산 현황 조회 (조회 전용)")
     @GetMapping("/shared/{token}")
     public ApiResponse<BudgetOverviewResponse> getSharedOverview(@PathVariable String token) {

@@ -150,7 +150,6 @@ public class ChecklistController {
     }
 
     /** 공유 링크로 체크리스트를 조회 전용으로 확인한다(로그인 불필요). */
-    @Hidden
     @Operation(summary = "공유 링크로 체크리스트 조회 (조회 전용)")
     @GetMapping("/shared/{token}")
     public ApiResponse<ChecklistOverviewResponse> getSharedChecklist(

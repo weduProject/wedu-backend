@@ -5,7 +5,6 @@ import com.wedu.proposal.domain.ProposalItemCategory;
 import com.wedu.proposal.dto.ProposalOptionRequest;
 import com.wedu.proposal.dto.ProposalResponse;
 import com.wedu.proposal.service.ProposalService;
-import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -20,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /** 인증 사용자의 "나만의 프로포즈 만들기" HTTP 요청을 처리한다. */
-@Hidden
 @Tag(name = "Proposal", description = "나만의 프로포즈 만들기")
 @RestController
 @RequestMapping("/api/proposals")

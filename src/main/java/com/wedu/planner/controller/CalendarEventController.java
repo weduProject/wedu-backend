@@ -149,7 +149,6 @@ public class CalendarEventController {
     }
 
     /** 공유 링크로 월별 캘린더 일정을 조회 전용으로 확인한다(로그인 불필요). */
-    @Hidden
     @Operation(summary = "공유 링크로 캘린더 일정 조회 (조회 전용)")
     @GetMapping("/shared/{token}")
     public ApiResponse<List<CalendarEventResponse>> getSharedMonthlyEvents(
