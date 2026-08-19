@@ -145,7 +145,13 @@ public enum ErrorCode {
             HttpStatus.FORBIDDEN,
             "FRIEND_403",
             "친구로 등록된 사용자만 편집할 수 있습니다."),
-    SHARE_LINK_NOT_FOUND(HttpStatus.NOT_FOUND, "SHARE_LINK_404", "유효하지 않은 공유 링크입니다.");
+    SHARE_LINK_NOT_FOUND(HttpStatus.NOT_FOUND, "SHARE_LINK_404", "유효하지 않은 공유 링크입니다."),
+
+    // --- invitation 도메인 ---
+    INVITATION_GALLERY_IMAGE_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "INVITATION_GALLERY_404",
+            "갤러리 이미지를 찾을 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;

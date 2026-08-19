@@ -13,7 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** 청첩장 갤러리 이미지 등록·조회 유스케이스를 처리한다. */
+/** 청첩장 갤러리 이미지 등록·조회·삭제 유스케이스를 처리한다. */
 @Service
 @RequiredArgsConstructor
 public class GalleryService {
@@ -61,5 +61,27 @@ public class GalleryService {
                 .stream()
                 .map(GalleryImageResponse::from)
                 .toList();
+    }
+
+    /** 로그인 사용자의 청첩장 갤러리 이미지를 삭제한다. */
+    @Transactional
+    public void delete(Long userId, Long imageId) {
+        validateUserId(userId);
+        if (imageId == null) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "갤러리 이미지 식별자는 필수입니다.");
+        }
+
+        GalleryImage galleryImage = galleryImageRepository
+                .findByIdAndInvitationUserId(imageId, userId)
+                .orElseThrow(() ->
+                        new BusinessException(ErrorCode.INVITATION_GALLERY_IMAGE_NOT_FOUND));
+
+        galleryImageRepository.delete(galleryImage);
+    }
+
+    private void validateUserId(Long userId) {
+        if (userId == null) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "사용자 식별자는 필수입니다.");
+        }
     }
 }
