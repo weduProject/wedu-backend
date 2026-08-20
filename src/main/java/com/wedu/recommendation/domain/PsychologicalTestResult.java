@@ -175,6 +175,49 @@ public class PsychologicalTestResult extends BaseTimeEntity {
                 partnerMbti);
     }
 
+    /** 기존 응답을 새 답변으로 교체한다. */
+    public void replace(
+            MoodType moodType,
+            LocationType locationType,
+            RegionType region,
+            PreparationType preparationType,
+            List<RequiredService> requiredServices,
+            List<PriorityValue> priorityValues,
+            BudgetRange budgetRange,
+            List<ExcludedElement> excludedElements,
+            ScheduleRange scheduleRange,
+            PartnerMbti partnerMbti) {
+
+        validate(
+                this.userId,
+                moodType,
+                locationType,
+                region,
+                preparationType,
+                requiredServices,
+                priorityValues,
+                budgetRange,
+                excludedElements,
+                scheduleRange,
+                partnerMbti);
+
+        this.moodType = moodType;
+        this.locationType = locationType;
+        this.region = region;
+        this.preparationType = preparationType;
+        replaceCollection(this.requiredServices, requiredServices);
+        replaceCollection(this.priorityValues, priorityValues);
+        this.budgetRange = budgetRange;
+        replaceCollection(this.excludedElements, excludedElements);
+        this.scheduleRange = scheduleRange;
+        this.partnerMbti = partnerMbti;
+    }
+
+    private static <T> void replaceCollection(List<T> target, List<T> source) {
+        target.clear();
+        target.addAll(source);
+    }
+
     private static void validate(
             Long userId,
             MoodType moodType,
