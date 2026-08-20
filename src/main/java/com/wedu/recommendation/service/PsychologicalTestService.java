@@ -24,8 +24,7 @@ public class PsychologicalTestService {
     /**
      * 사용자의 심리테스트 응답을 저장한다.
      *
-     * <p>같은 사용자가 다시 제출하면 기존 결과를 삭제하고
-     * 새로운 결과로 교체한다.
+     * <p>같은 사용자가 다시 제출하면 기존 결과를 덮어쓴다.
      *
      * @return 저장된 심리테스트 결과 ID
      */
@@ -44,28 +43,39 @@ public class PsychologicalTestService {
         List<PriorityValue> sortedPriorityValues =
                 convertPriorityValues(request.priorityValues());
 
-        psychologicalTestResultRepository
-                .findByUserId(userId)
-                .ifPresent(psychologicalTestResultRepository::delete);
+        PsychologicalTestResult existing =
+                psychologicalTestResultRepository.findByUserId(userId).orElse(null);
+        if (existing != null) {
+            existing.replace(
+                    request.moodType(),
+                    request.locationType(),
+                    request.region(),
+                    request.preparationType(),
+                    request.requiredServices(),
+                    sortedPriorityValues,
+                    request.budgetRange(),
+                    request.excludedElements(),
+                    request.scheduleRange(),
+                    request.partnerMbti()
+            );
+            return existing.getId();
+        }
 
-        PsychologicalTestResult result = PsychologicalTestResult.create(
-                userId,
-                request.moodType(),
-                request.locationType(),
-                request.region(),
-                request.preparationType(),
-                request.requiredServices(),
-                sortedPriorityValues,
-                request.budgetRange(),
-                request.excludedElements(),
-                request.scheduleRange(),
-                request.partnerMbti()
-        );
-
-        PsychologicalTestResult savedResult =
-                psychologicalTestResultRepository.save(result);
-
-        return savedResult.getId();
+        return psychologicalTestResultRepository.save(
+                PsychologicalTestResult.create(
+                        userId,
+                        request.moodType(),
+                        request.locationType(),
+                        request.region(),
+                        request.preparationType(),
+                        request.requiredServices(),
+                        sortedPriorityValues,
+                        request.budgetRange(),
+                        request.excludedElements(),
+                        request.scheduleRange(),
+                        request.partnerMbti()
+                )
+        ).getId();
     }
 
     /**
